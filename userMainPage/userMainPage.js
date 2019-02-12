@@ -1,4 +1,5 @@
 var docuSkyObj = null;
+var JsonData = null;
 $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     let param = {
@@ -18,6 +19,7 @@ $(document).ready( function () {
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
     GetCorpus();
+    GetJson();
 } );
 
 function GetCorpus(){
@@ -69,6 +71,50 @@ function  PrintDocManageTable(AllCorpus){
   $('#DocManageTable').DataTable().destroy();
   $("#DocManageTable").html(TablePrefix + `</tbody>`);
   $('#DocManageTable').DataTable({
+      paging:true,
+      searching:true,
+      info:true
+   });
+
+}
+
+function GetJson(){
+  $.ajax({
+     type: 'GET',
+     url: `http://docusky.org.tw/docusky/webApi/getAllCategoryDataFilenamesJson.php`,
+     dataType: 'json',
+     success: function (data) {
+        JsonData = data.message;
+        PrintJsonData(JsonData);
+     },
+     error: function(response){
+          console.log(response.responseText);
+        }
+  });
+
+}
+
+function PrintJsonData(JsonData){
+  let TablePrefix = `<thead>
+  <tr>
+  <th>種類</th>
+  <th>路徑</th>
+  <th>檔名</th>
+  <th>動作</th>
+  </tr>
+  </thead>
+  <tbody>`;
+  for(catgory in JsonData){
+   JsonData[catgory].forEach(function(item, index){
+     item  = item.split("/");
+     //alert(item[0]+" "+ item[1]);
+    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td>刪除 下載</td></tr>`;
+    });
+
+  }
+  $('#JsonManageTable').DataTable().destroy();
+  $("#JsonManageTable").html(TablePrefix + `</tbody>`);
+  $('#JsonManageTable').DataTable({
       paging:true,
       searching:true,
       info:true
