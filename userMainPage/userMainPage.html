@@ -1,0 +1,120 @@
+
+<html>
+<head>
+<link rel="Shortcut Icon" type="image/x-icon" href="http://docusky.org.tw/DocuSky/images/icons/DocuSkyIcon.png" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>DocuSky: 數位人文研究平台</title>
+    <script src="http://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+    <script src="http://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+    <script src="http://docusky.org.tw/DocuSky/js.ui/docusky.ui.getDbCorpusDocumentsSimpleUI.js"></script>
+    <script src="http://docusky.org.tw/DocuSky/js/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="http://docusky.org.tw/DocuSky/css/foundation.css">
+    <link rel="stylesheet" href="http://docusky.org.tw/DocuSky/css/app.css">
+    <link rel="stylesheet" href="http://docusky.org.tw/DocuSky/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <script src="http://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="./userMainPage.js"></script>
+</head>
+<body>
+<header class="row expanded container">
+    <div class="small-3 columns">
+        <h1 class="title"><a href="/DocuSky/index.html"><img src="http://docusky.org.tw/DocuSky/images/DocuSky_A_4C.png" height="100%" width="100%"></a></h1>
+    </div>
+    <div class="small-9 columns">
+        <div class="tools">
+            <ul>
+                <li id="nav01"><a href="ds-03.tags.html"><div class="hidden">標記與編輯</div></a></li>
+                <li id="nav02"><a href="ds-04.convertFormat.html"><div class="hidden">轉換文本格式</a></div></li>
+                <li id="nav03"><a href="ds-05.constructDatabase.html"><div class="hidden">建庫與重整</a></div></li>
+                <li id="nav04"><a href="#" class="selected"><div class="hidden">個人資料庫</a></div></li>
+                <li id="nav05"><a href="ds-06.textAnalyticsTools.html"><div class="hidden">探勘與分析</div></a></li>
+                <li id="nav06"><a href="ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
+                <li id="nav07"><a href="ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
+            </ul>
+        </div>
+    </div>
+</header>
+<div class="row expanded navigation text-right">
+    <div class="small-12 columns">
+        <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
+            <li><span class="user">個人資料庫</span></li>
+            <li><a href="ds-01.home.html">回首頁</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#researchTools">研究平台</a>
+            <li><a href="accounts/changePassword2.php">修改密碼</a></li>
+            <li><a href="userLogout.php">登出</a></li>
+        </ul>
+    </div>
+</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="nav flex-column nav-pills col-2" role="tablist" aria-orientation="vertical">
+      <a class="nav-link active" data-toggle="pill" id="DocManege-tab" href="#DocManage" role="tab" aria-controls="DocManage" aria-selected="true">文件集管理</a>
+      <a class="nav-link" data-toggle="pill" href="#GISManage" role="tab" aria-controls="GISManage" aria-selected="false">GIS管理</a>
+    </div>
+    <div class="tab-content col-10">
+      <div class="tab-pane fade show active" id="DocManage" role="tabpanel" aria-labelledby="DocManage-tab">
+              <table id="DocManageTable" class="table table-striped table-bordered" style="width:100%">
+                  <thead>
+                  <tr>
+                  <th>資料庫名稱</th>
+                  <th>資料庫的文獻集</th>
+                  <th>狀態</th>
+                  <th>建立時間</th>
+                  <th>動作</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                      <tr><td>資料庫名稱</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                    </tbody>
+              </table>
+      </div>
+      <div class="tab-pane fade" id="GISManage" role="tabpanel" aria-labelledby="DocManege-tab">
+        <table id="GISManageTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+            <tr>
+            <th>朝代</th>
+            <th>朝代時間</th>
+            <th>契約型態</th>
+            <th>土地號碼</th>
+            <th>西元</th>
+            <th>標題</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr><td>Welcome</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+
+              </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="researchTools" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="exampleModalLongTitle">研究平台</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h5>
+          <li><a href="ds-03.tags.html" target="_blank">標記與編輯</a></li>
+          <li><a href="ds-04.convertFormat.html" target="_blank">轉換文本格式</a></li>
+          <li><a href="ds-05.constructDatabase.html" target="_blank">建庫與重整</a></li>
+          <li><a href="ds-06.textAnalyticsTools.html" target="_blank">探勘與分析</a></li>
+          <li><a href="ds-07.gis.html" target="_blank">GIS與視覺化</a></li>
+        </h5>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
