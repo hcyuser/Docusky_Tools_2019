@@ -1,7 +1,13 @@
 var docuSkyObj = null;
+var docuskyJson = null;
 var JsonData = null;
+var tmp = {};
+var formData = [];
+
 $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
+    docuskyJson = docuskyManageDataFileListSimpleUI;
+
     let param = {
                 target: 'USER',
                 db: docuSkyObj.db,
@@ -13,8 +19,9 @@ $(document).ready( function () {
     docuSkyObj.getQueryResultDocuments(param, null, null);
     $("body").hover(function() {
         if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
-          $("#CorpusDoc_dbCorpusListContainer_0").hide()
+          docuSkyObj.hideWidget(true);
         }
+
     });
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
@@ -120,4 +127,151 @@ function PrintJsonData(JsonData){
       info:true
    });
 
+}
+
+function UploadXMLFile(){
+  let fileSizeLimit = "120" * 1024 * 1024;  // upload size limit -- 需配合 uploadXmlFilesToBuildDbJson.php 的設定
+
+  // Currently only support one file upload
+
+  var files = $("#UploadXmlFileId").get(0).files;
+  tmp.fileName = files[0].name;
+  tmp.fileSize = files[0].size;
+  if (tmp.fileSize > fileSizeLimit) {
+      alert("Error: \n" +
+          "The size of " + tmp.fileName + " (" + tmp.fileSize + ") exceeds upload limit\n" +
+          "Upload limit size: " + fileSizeLimit);
+      tmp.fileData = '';               // if upload empty string, DocuSky will return 'invalid XML' message
+      return;
+  }
+  readFile(files[0]).done(function(fileData){
+      tmp.fileData = fileData;
+  });
+
+}
+
+var readFile = function(file){
+    var loader = new FileReader();
+    var def = $.Deferred(), promise = def.promise();
+
+    //--- provide classic deferred interface
+    loader.onload = function (e) { def.resolve(e.target.result); };
+    loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
+    loader.onerror = loader.onabort = function (e) { def.reject(e); };
+    promise.abort = function () { return loader.abort.apply(loader, arguments); };
+
+    //loader.readAsBinaryString(file);
+    loader.readAsText(file,'UTF-8');         // 不能用 binary 讀入，會變成亂碼
+    return promise;
+};
+
+function UploadXMLBTN(event){
+  event.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
+  var url = 'http://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
+  formData = [];
+  formData[0] = {};
+  formData[0]["name"] = "dbTitleForImport";
+  formData[0]["value"] = $.trim($("#UploadDBName").val());
+  let nameVal = "importedFiles[]";
+  formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
+  //console.log(formData);
+  uploadMultipart(url, formData);
+
+}
+
+var uploadMultipart = function(url, data) {
+        var mul = buildMultipart(data);
+        $.ajax({
+            url: url,
+            data: mul.data,
+            processData: false,
+            type: "post",
+            //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
+            contentType: "multipart/form-data; boundary=" + mul.myBoundary,
+            xhr: function() {
+                var xhr = $.ajaxSettings.xhr();
+                // upload progress
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        var position = evt.loaded || evt.position;
+                        var percentComplete_f = position / evt.total * 100;	// 20170302
+                        var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
+                        var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
+                        $("#" + uploadProgressId + " .ds-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
+                        //$("#" + uploadProgressId).text(percentComplete_i + '%' + r);
+                    }
+                }, false);     // true: event captured in capturing phase, false: bubbling phase
+                return xhr;
+            },
+            success: function(data, status, xhr) {
+                if (data.code == 0) {              // successfully get db list
+                    alert(data.message);
+                }
+                else {
+                    alert("Error: " + data.code + '\n' + data.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                //var err = eval("(" + xhr.responseText + ")");
+                alert(error);
+            }
+        });
+
+    };
+
+    var buildMultipart = function(data) {
+        var key, crunks = [], myBoundary;
+        myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
+        myBoundary = '(-----------docusky:' + myBoundary + ')';
+
+        for (var key in data){
+            if (key == "file") {
+                crunks.push("--" + myBoundary + '\r\n' +
+                    "Content-Disposition: form-data; name='" + data[key].name + "'; filename='" + data[key].filename + "'" + '\r\n' +
+                    'Content-Type: application/octet-stream\r\n' +
+                    'Content-Transfer-Encoding: binary\r\n\r\n' +
+                    data[key].value);
+            }
+            else{
+                crunks.push("--" + myBoundary + '\r\n' +
+                    "Content-Disposition: form-data; name='" +
+                    data[key].name + "'" +
+                    '\r\n\r\n' +
+                    data[key].value);
+            }
+        }
+
+        return {
+            myBoundary: myBoundary,
+            data: crunks.join('\r\n') + '\r\n--' + myBoundary + "--"
+        };
+    };
+
+function UploadJson(event){
+  event.preventDefault();
+  let transporter = docuskyJson.jsonTransporter;
+  readJsonFile($("#UploadJsonFileId").get(0).files[0]).done(function(fileData){
+      transporter.storeJson($("#JsonCatgory").val(), $("#JsondataPath").val(), $("#UploadJsonFileId").get(0).files[0].name, JSON.parse(fileData), storeJsonCallback);
+
+  });
+
+}
+
+function storeJsonCallback() {
+   alert("上傳成功");
+}
+
+function readJsonFile(file){
+  var loader = new FileReader();
+  var def = $.Deferred(), promise = def.promise();
+
+  //--- provide classic deferred interface
+  loader.onload = function (e) { def.resolve(e.target.result); };
+  loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
+  loader.onerror = loader.onabort = function (e) { def.reject(e); };
+  promise.abort = function () { return loader.abort.apply(loader, arguments); };
+
+  //loader.readAsBinaryString(file);
+  loader.readAsText(file,'UTF-8');         // 不能用 binary 讀入，會變成亂碼
+  return promise;
 }
