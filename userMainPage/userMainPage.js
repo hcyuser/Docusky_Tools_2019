@@ -115,7 +115,8 @@ function PrintJsonData(JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
      //alert(item[0]+" "+ item[1]);
-    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td>刪除 下載</td></tr>`;
+    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td><button type="button" onclick="renameJsonDialogContent('`+catgory+`', '`+item[0]+`', '`+item[1]+`');">重新命名</button>`
+    +`<button type="button" onclick="deleteJson('`+catgory+`', '`+item[0]+`', '`+item[1]+`')">刪除</button> 下載</td></tr>`;
     });
 
   }
@@ -274,4 +275,28 @@ function readJsonFile(file){
   //loader.readAsBinaryString(file);
   loader.readAsText(file,'UTF-8');         // 不能用 binary 讀入，會變成亂碼
   return promise;
+}
+
+function renameJsonDialogContent(catgory, datapath, fromFilename){
+  $("#oldDataFileCatgory").html(catgory);
+  $("#oldDataFileDatapath").html(datapath);
+  $("#oldDataFileName").html(fromFilename);
+  $("#renameDataFileDialog").modal('show');
+}
+
+function renameJson(){
+  let transporter = docuskyJson.jsonTransporter;
+  transporter.renameDataFile($("#oldDataFileCatgory").html(),$("#oldDataFileDatapath").html(),$("#oldDataFileName").html(),$("#newDataFileName").val(),null);
+  $("#renameDataFileDialog").modal('hide');
+  alert("命名成功");
+  GetJson();
+
+}
+
+function deleteJson(catgory, datapath, filename){
+  let transporter = docuskyJson.jsonTransporter;
+  transporter.deleteDataFile(catgory, datapath, filename, null);
+  alert("刪除成功");
+  GetJson();
+
 }

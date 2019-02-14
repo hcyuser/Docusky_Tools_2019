@@ -144,5 +144,28 @@
     </div>
   </div>
 </div>
+<div class="modal" id="renameDataFileDialog" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">重新命名Json</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        原種類：<div id="oldDataFileCatgory"></div><br>
+        原路徑：<div id="oldDataFileDatapath"></div><br>
+        原檔名：<div id="oldDataFileName"></div><br>
+        <br>
+        新檔名：<input type="text" id="newDataFileName"><br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="renameJson()">確定儲存</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
