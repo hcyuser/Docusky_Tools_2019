@@ -1,11 +1,13 @@
 var docuSkyObj = null;
 var docuskyJson = null;
+var docuskyDbObj = null;
 var JsonData = null;
 var tmp = {};
 var formData = [];
 
 $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
+    docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
 
     let param = {
@@ -16,13 +18,14 @@ $(document).ready( function () {
                 page: docuSkyObj.page, // current page
                 pageSize: docuSkyObj.pageSize
             };
-    docuSkyObj.getQueryResultDocuments(param, null, null);
+    /*docuSkyObj.getQueryResultDocuments(param, null, null);
     $("body").hover(function() {
         if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
           docuSkyObj.hideWidget(true);
         }
 
-    });
+    });*/
+    docuskyDbObj.manageDbList(null);
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
     GetCorpus();
@@ -88,7 +91,7 @@ function  PrintDocManageTable(AllCorpus){
 function GetJson(){
   $.ajax({
      type: 'GET',
-     url: `http://docusky.org.tw/docusky/webApi/getAllCategoryDataFilenamesJson.php`,
+     url: `https://docusky.org.tw/docusky/webApi/getAllCategoryDataFilenamesJson.php`,
      dataType: 'json',
      success: function (data) {
         JsonData = data.message;
@@ -168,19 +171,19 @@ var readFile = function(file){
 
 function UploadXMLBTN(event){
   event.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
-  var url = 'http://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
+  var url = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
   formData = [];
   formData[0] = {};
   formData[0]["name"] = "dbTitleForImport";
   formData[0]["value"] = $.trim($("#UploadDBName").val());
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
-  //console.log(formData);
-  uploadMultipart(url, formData);
+  docuskyDbObj.uploadMultipart(url, formData);
 
 }
 
 var uploadMultipart = function(url, data) {
+        alert('uploading...');
         var mul = buildMultipart(data);
         $.ajax({
             url: url,
