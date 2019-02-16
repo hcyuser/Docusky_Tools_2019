@@ -57,20 +57,21 @@
       <a class="nav-link" data-toggle="pill" href="#JsonManage" role="tab" aria-controls="JsonManage" aria-selected="false">Json管理</a>
     </div>
     <div class="tab-content col-10">
-      <div class="tab-pane fade show active" id="DocManage" role="tabpanel" aria-labelledby="DocManage-tab">
-          <h3>新增資料</h3>
-          <div class="panel panel-default">
-            <div class="panel-body">
-              <form id='uploadFormId'>
-                <div class="form-group form-inline">
-                  資料庫名稱：<input type="text" id="UploadDBName" value="Default">
-                  <label for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
-                  <input type="file"   id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
-                  <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
-                </div>
-              </form>
+      <div class="tab-pane fade show active" id="DocManage" onclick="GetCorpus()" role="tabpanel" aria-labelledby="DocManage-tab">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div>
+              <h3>新增資料</h3>
+                <form>
+                  <div class="form-group form-inline">
+                    資料庫名稱：<input type="text" id="UploadDBName" value="Default">
+                    <label for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
+                    <input type="file"   id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
+                    <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
+                  </div>
+                </form>
             </div>
-          </div>
+            <div>
               <h3>資料列表</h3>
               <table id="DocManageTable" class="table table-striped table-bordered" style="width:100%">
                   <thead>
@@ -86,38 +87,44 @@
                       <tr><td>資料庫名稱</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
                     </tbody>
               </table>
-      </div>
-      <div class="tab-pane fade" id="JsonManage" role="tabpanel" aria-labelledby="DocManage-tab">
-        <h3>新增資料</h3>
-        <div class="panel panel-default">
-          <div class="panel-body">
-            <form>
-              <div class="form-group form-inline">
-                類別：<input type="text" id="JsonCatgory" value="gis">
-                路徑：<input type="text" id="JsondataPath" value="web">
-                <input type="file" id='UploadJsonFileId' accept='.json' autocomplete='off' class="form-control-file col-5">
-                <button type="button" onclick="UploadJson(event)" class="btn btn-dark">開始上傳</button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
-        <h3>資料列表</h3>
-        <table id="JsonManageTable" class="table table-striped table-bordered" style="width:100%">
-            <thead>
-            <tr>
-            <th>種類</th>
-            <th>路徑</th>
-            <th>檔名</th>
-            <th>動作</th>
-            </tr>
-            </thead>
-            <tbody>
-                <tr><td>Welcome</td><td>-</td><td>-</td><td>-</td></tr>
-
-              </tbody>
-        </table>
       </div>
+      <div class="tab-pane fade" id="JsonManage" onclick="GetJson()" role="tabpanel" aria-labelledby="DocManage-tab">
+        <div class="panel panel-default">
+         <div class="panel-body">
+           <div>
+             <h3>新增資料</h3>
+              <form>
+                <div class="form-group form-inline">
+                  類別：<input type="text" id="JsonCatgory" value="gis">
+                  路徑：<input type="text" id="JsondataPath" value="web">
+                  <input type="file" id='UploadJsonFileId' accept='.json' autocomplete='off' class="form-control-file col-5">
+                  <button type="button" onclick="UploadJson(event)" class="btn btn-dark">開始上傳</button>
+                </div>
+              </form>
+          </div>
+          <div>
+            <h3>資料列表</h3>
+            <table id="JsonManageTable" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                <tr>
+                <th>種類</th>
+                <th>路徑</th>
+                <th>檔名</th>
+                <th>動作</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Welcome</td><td>-</td><td>-</td><td>-</td></tr>
 
+                  </tbody>
+                </table>
+          </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -168,5 +175,6 @@
     </div>
   </div>
 </div>
+
 </body>
 </html>

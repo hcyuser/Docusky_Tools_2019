@@ -284,6 +284,7 @@ function renameJsonDialogContent(catgory, datapath, fromFilename){
   $("#oldDataFileCatgory").html(catgory);
   $("#oldDataFileDatapath").html(datapath);
   $("#oldDataFileName").html(fromFilename);
+  $("#newDataFileName").val(fromFilename);
   $("#renameDataFileDialog").modal('show');
 }
 
