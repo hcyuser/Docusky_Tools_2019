@@ -9,7 +9,6 @@ $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
-
     let param = {
                 target: 'USER',
                 db: docuSkyObj.db,
@@ -18,14 +17,14 @@ $(document).ready( function () {
                 page: docuSkyObj.page, // current page
                 pageSize: docuSkyObj.pageSize
             };
-    /*docuSkyObj.getQueryResultDocuments(param, null, null);
-    $("body").hover(function() {
-        if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
-          docuSkyObj.hideWidget(true);
-        }
-
-    });*/
+    //docuSkyObj.getQueryResultDocuments(param, null, null);
+    //$("body").hover(function() {
+    //    if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
+    //       docuSkyObj.hideWidget(true);
+    //    }
+    //});
     docuskyDbObj.manageDbList(null);
+
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
     GetCorpus();
@@ -76,7 +75,7 @@ function  PrintDocManageTable(AllCorpus){
                 + status[DBStatus[ DB ]] + `</td><td>`
                 + DBTime[DB] + `</td>`;
 
-    TablePrefix += `<td>刪除 下載</td></tr>`;
+    TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  下載</td></tr>`;
   }
   $('#DocManageTable').DataTable().destroy();
   $("#DocManageTable").html(TablePrefix + `</tbody>`);
@@ -118,8 +117,7 @@ function PrintJsonData(JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
      //alert(item[0]+" "+ item[1]);
-    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td><button type="button" onclick="renameJsonDialogContent('`+catgory+`', '`+item[0]+`', '`+item[1]+`');">重新命名</button>`
-    +`<button type="button" onclick="deleteJson('`+catgory+`', '`+item[0]+`', '`+item[1]+`')">刪除</button> 下載</td></tr>`;
+    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>下載</button></td></tr>`;
     });
 
   }
@@ -178,12 +176,13 @@ function UploadXMLBTN(event){
   formData[0]["value"] = $.trim($("#UploadDBName").val());
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
+  //console.log(formData);
   docuskyDbObj.uploadMultipart(url, formData);
 
 }
 
 var uploadMultipart = function(url, data) {
-        alert('uploading...');
+   alert('uploading...');
         var mul = buildMultipart(data);
         $.ajax({
             url: url,
@@ -263,6 +262,7 @@ function UploadJson(event){
 
 function storeJsonCallback() {
    alert("上傳成功");
+   GetCorpus();
 }
 
 function readJsonFile(file){
@@ -303,4 +303,53 @@ function deleteJson(catgory, datapath, filename){
   alert("刪除成功");
   GetJson();
 
+}
+
+function retrieveJson(catgory,datapath,filename){
+   let transporter = docuskyJson.jsonTransporter;
+   transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback(filename));
+
+}
+
+function retrieveJsonCallback(filename){
+  alert(filename);
+  let json = docuskyJson.jsonTransporter.jsonObj;
+  alert(JSON.stringify(json));
+/*
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);*/
+
+}
+
+function deleteXML(DB){
+  var URL = "https://docusky.org.tw/DocuSky/webApi/deleteDbJson.php?db="+DB;
+  $.ajax({
+     type: 'GET',
+     url: URL,
+     dataType: 'json',
+     success: function (data) {
+        alert("刪除中");
+        GetCorpus();
+     },
+     error: function(response){
+          console.log(response.responseText);
+        }
+  });
+}
+
+function renameDBDialogContent(oldname){
+  $("#oldDBName").html(oldname);
+  $("#newDBName").val(oldname);
+  $("#renameDBDialog").modal('show');
+}
+
+function renameDB(){
+  docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),null);
+  $("#renameDBDialog").modal('hide');
+  GetCorpus();
 }
