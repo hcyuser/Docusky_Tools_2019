@@ -4,7 +4,6 @@ var docuskyDbObj = null;
 var JsonData = null;
 var tmp = {};
 var formData = [];
-var profile =null;
 $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
