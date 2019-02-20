@@ -24,7 +24,6 @@ $(document).ready( function () {
     //    }
     //});
     docuskyDbObj.manageDbList(null);
-
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
     GetCorpus();
@@ -70,12 +69,23 @@ function  PrintDocManageTable(AllCorpus){
   }
   let status = [ 'OK', '建置中', '建置中', '建置中', '刪除中']
   for(DB in CorpusGroup){
+    let webpage_search = "";
+    for(CorpusIndex in CorpusGroup[ DB ]){
+      if(CorpusGroup[ DB ].length==1){
+        webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a>`;
+      }else{
+        webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a><br>`;
+      }
+
+    }
+    //console.log(webpage_search);
+    //CorpusGroup[ DB ].join( '<br>' )
     TablePrefix += `<tr><td>` + DB + `</td><td>`
-                + CorpusGroup[ DB ].join( '<br>' ) + `</td><td>`
+                + webpage_search + `</td><td>`
                 + status[DBStatus[ DB ]] + `</td><td>`
                 + DBTime[DB] + `</td>`;
 
-    TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  下載</td></tr>`;
+    TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXml("`+DB+`")'>下載</button></td></tr>`;
   }
   $('#DocManageTable').DataTable().destroy();
   $("#DocManageTable").html(TablePrefix + `</tbody>`);
@@ -177,6 +187,7 @@ function UploadXMLBTN(event){
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
   //console.log(formData);
+  
   docuskyDbObj.uploadMultipart(url, formData);
 
 }
@@ -306,6 +317,7 @@ function deleteJson(catgory, datapath, filename){
 }
 
 function retrieveJson(catgory,datapath,filename){
+   window.open('https://docusky.org.tw/docusky/webApi/getDataFileBinary.php?catpathfile='+catgory+"/"+datapath+"/"+filename);
    let transporter = docuskyJson.jsonTransporter;
    transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback(filename));
 
@@ -353,3 +365,204 @@ function renameDB(){
   $("#renameDBDialog").modal('hide');
   GetCorpus();
 }
+
+/*------------------download DocuXml-------------------*/
+var downloadDocuXml = function (dbname) {
+    var documents = {};
+    let param = {
+        target: 'USER',
+        db: dbname,
+        corpus: '[ALL]',
+        query: '.all',
+        page: 1,
+        pageSize: 200
+    };
+
+    let getDocList = function() {
+        let totalFound = docuSkyObj.totalFound;
+        let param = {
+            target: 'USER',
+            db: docuSkyObj.db,
+            corpus: '[ALL]',
+            query: '.all',
+            page: docuSkyObj.page, // current page
+            pageSize: docuSkyObj.pageSize
+        };
+        for (let i in docuSkyObj.docList) {
+            documents[docuSkyObj.docList[i].number] = docuSkyObj.docList[i].docInfo
+        }
+
+        if (param.page * param.pageSize <= totalFound) {
+            param.page += 1;
+            docuSkyObj.getQueryResultDocuments(param, null, getDocList);
+        } else {
+
+            let exporter = new DocuSkyExporter();
+            let xmlString = exporter.generateDocuXml(documents, param.db);
+            let blob = new Blob([xmlString]);
+            let filename =  dbname + '.xml';
+            saveAs(blob, filename)
+        }
+    };
+
+    docuSkyObj.hideLoadingIcon(true);
+    alert("下載中，請稍候");
+    docuSkyObj.getQueryResultDocuments(param, null, getDocList);
+
+
+};
+
+var DocuSkyExporter = function() {
+    this.corpus = {};
+    this.db = '';
+};
+DocuSkyExporter.prototype.generateDocuXml = function(documents, db) {
+    let documentXml = '';
+    this.db = db;
+    for (let number in documents) {
+        let d = documents[number];
+        d.number = number;
+        documentXml += this.parseDocument(d);
+    }
+    return "<ThdlPrototypeExport>"
+        + this.generateFeatureAnalysisInfo()
+        + "<documents>"
+        + documentXml
+        + "</documents></ThdlPrototypeExport>";
+};
+
+DocuSkyExporter.prototype.generateFeatureAnalysisInfo = function() {
+    let result = "";
+    for (let corpus in this.corpus) {
+        result += "<corpus name='"+ corpus +"'><feature_analysis>";
+        for (let userDefineTag in this.corpus[corpus].feature_analysis) {
+            result += "<tag name='" + userDefineTag + "' default_sub_category='-' default_category='" + userDefineTag + "' type='contentTagging'/>";
+        }
+        result += '</feature_analysis></corpus>';
+    }
+    return result;
+};
+
+DocuSkyExporter.prototype.parseUserDefinedTag = function(corpus, content) {
+    try {
+        let UserDefinedTag = '';
+        const tagName = {};
+        const regex = /<(Udef_[^>]+?)>(.*)<\/Udef_[^>|<]+?>/g;
+        let m;
+        while ((m = regex.exec(content)) !== null) {
+            // This is necessary to avoid infinite loops with zero-width matches
+            if (m.index === regex.lastIndex) {
+                regex.lastIndex++;
+            }
+            tagName[m[1]] = m[1];
+            if (!(m[1] in this.corpus[corpus].feature_analysis)) this.corpus[corpus].feature_analysis[m[1]] = m[1];
+        }
+        for (let key in tagName) {
+            UserDefinedTag += "<tag default_sub_category='-' default_category='" + key + "' type='contentTagging'>" + key + "</tag>";
+        }
+        return UserDefinedTag;
+    } catch (e) {
+        console.log(e);
+    }
+};
+
+DocuSkyExporter.prototype.convertMetadata = function(docMetadataXml) {
+    if (docMetadataXml === undefined) return '';
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(docMetadataXml, "text/xml");
+    let xmlString = '';
+    if (xmlDoc.firstChild.nodeName === "DocMetadata")
+        xmlString = xmlDoc.firstChild.innerHTML;
+    return xmlString;
+};
+DocuSkyExporter.prototype.convertTitle = function(docTitleXml) {
+    if (docTitleXml === undefined) return '';
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(docTitleXml, "text/xml");
+    return xmlDoc.querySelector("DocTitle").textContent;
+};
+DocuSkyExporter.prototype.convertTimeInfo = function({
+                                                         dateOrigStr='',
+                                                         dateDynasty='',
+                                                         dateEra='',
+                                                         dateChNormYear='',
+                                                         dateAdDate='',
+                                                         dateAdYear='',
+                                                         timeseqType='',
+                                                         timeseqNumber='',
+                                                     }) {
+    return "<time_orig_str>" + dateOrigStr + "</time_orig_str>"
+        + "<time_dynasty>" + dateDynasty + "</time_dynasty>"
+        + "<time_era>" + dateEra + "</time_era>"
+        + "<time_norm_year>" + dateChNormYear + "</time_norm_year>"
+        + "<time_ad_date>" + dateAdDate + "</time_ad_date>"
+        + "<time_ad_year>" + dateAdYear + "</time_ad_year>"
+        + "<timeseq_type>" + timeseqType + "</timeseq_type>"
+        + "<timeseq_number>" + timeseqNumber + "</timeseq_number>";
+};
+DocuSkyExporter.prototype.convertPlaceInfo = function({
+                                                          geoLevel1='',
+                                                          geoLevel2='',
+                                                          geoLevel3='',
+                                                          geoX='',
+                                                          geoY='',
+                                                      }) {
+    return "<geo_level1>" + geoLevel1 + "</geo_level1>"
+        + "<geo_level2>" + geoLevel2 + "</geo_level2>"
+        + "<geo_level3>" + geoLevel3 + "</geo_level3>"
+        + "<geo_longitude>" + geoX + "</geo_longitude>"
+        + "<geo_latitude>" + geoY + "</geo_latitude>";
+};
+DocuSkyExporter.prototype.parseDocument = function({
+                                                       // 必要資訊
+                                                       number,                 // document number in corpus
+                                                       corpus,                 // corpus
+                                                       docClass,
+                                                       corpusOrder,            // corpus: corpus_order attribute
+                                                       docContentXml,          // doc_content
+                                                       docMetadataXml,         // xml_metadata
+                                                       docTitleXml,            // title
+                                                       docFilename,            // document: filename attribute
+                                                       timeInfo,               // dateOrigStr: time_orig_str, dateDynasty: time_dynasty,
+                                                       placeInfo,              // geoLevel1: geo_level1 ... geoLevel3: geo_level3, geoX: geo_longitude, geoY: geo_latitude
+                                                       //------------------------------------------------------
+                                                       docCompilation='',         // compilation
+                                                       docSource='',              // doc_source
+                                                       docSourceOrder=0,        // doc_source: doc_source_order attribute
+                                                       docType='',                // doctype
+                                                       docXmlFormatSubname='',    // docclass
+                                                       author='',                 // author
+                                                       docUserTagging='',         // doc_user_tagging (DocuSky don't support this information currently)
+                                                       docTopicL1='',             // topic
+                                                       docTopicL1Order=0,
+                                                       //--------------------- other information--------------
+                                                       // 這邊的資訊 DocuXml Draft 並沒有提供相對應的轉換
+                                                       docId='',
+                                                       docTimeCreated='',
+                                                       xmlFormatName='',
+                                                       srcFilename='',
+                                                       // extraMetadata='',    // DocuSky不支援?
+                                                   }) {
+    if (!(corpus in this.corpus)) {
+        this.corpus[corpus] = {
+            'corpusOrder': corpusOrder,
+            'feature_analysis': {}
+        };
+    }
+    docClass = (docClass === undefined) ? "-" : docClass;
+    return "<document filename='" + docFilename + "'>"
+        + "<corpus corpus_order='"+ corpusOrder +"'>" + corpus + "</corpus>"
+        + "<compilation>" + docCompilation + "</compilation>"
+        + "<title>" + this.convertTitle(docTitleXml) + "</title>"
+        + "<doc_source>" + docSource + "</doc_source>"
+        + "<doctype>" + docType + "</doctype>"
+        + "<docclass>" + docClass + "</docclass>"
+        + "<author>" + author + "</author>"
+        + this.convertPlaceInfo(placeInfo)
+        + "<topic>" + docTopicL1 + "</topic>"
+        + this.convertTimeInfo(timeInfo)
+        + "<doc_content>" + docContentXml + "</doc_content>"
+        + "<xml_metadata>" + this.convertMetadata(docMetadataXml) + "</xml_metadata>"
+        + "<doc_user_tagging>" + this.parseUserDefinedTag(corpus, docContentXml) + "</doc_user_tagging>"
+        + "</document>";
+};
