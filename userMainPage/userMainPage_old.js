@@ -4,58 +4,31 @@ var docuskyDbObj = null;
 var JsonData = null;
 var tmp = {};
 var formData = [];
-var profile =null;
+
 $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
-    /*let param = {
+    let param = {
                 target: 'USER',
                 db: docuSkyObj.db,
                 corpus: '[ALL]',
                 query: '.all',
                 page: docuSkyObj.page, // current page
                 pageSize: docuSkyObj.pageSize
-            };*/
+            };
     //docuSkyObj.getQueryResultDocuments(param, null, null);
     //$("body").hover(function() {
     //    if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
     //       docuSkyObj.hideWidget(true);
     //    }
     //});
-    docuskyDbObj.loginSuccFunc = InitialAfterLogin;
-    //docuskyDbObj.manageDbList(null);
+    docuskyDbObj.manageDbList(null);
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
-    $("#JsonManage").hide();
-    GetName();
     GetCorpus();
     GetJson();
 } );
-
-function InitialAfterLogin(data){
-  GetName();
-  GetCorpus();
-  GetJson();
-}
-
-function goToTop() {
-  document.body.scrollTop = 0;
-  document.documentElement.scrollTop = 0;
-}
-
-function hideUploadTool(){
-  if($("#DocManage").is(":visible")){
-    $("#DocManageUploadTool").toggle();
-  }
-  if($("#JsonManage").is(":visible")){
-    $("#JsonManageUploadTool").toggle();
-  }
-}
-
-function GetName(){
-  docuskyDbObj.getUserProfile(null, function(data){ $(".user").html(data.display_name+" 的資料庫");});
-}
 
 function GetCorpus(){
 
@@ -73,7 +46,6 @@ function GetCorpus(){
         }
     });
 }
-
 function  PrintDocManageTable(AllCorpus){
   let CorpusGroup = {}, DBStatus = {}, DBTime = {};
   let TablePrefix = `<thead>
@@ -151,9 +123,6 @@ function PrintJsonData(JsonData){
   </tr>
   </thead>
   <tbody>`;
-  if(typeof(JsonData)==='string'){
-    return;
-  }
   for(catgory in JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
@@ -218,8 +187,8 @@ function UploadXMLBTN(event){
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
   //console.log(formData);
+  
   docuskyDbObj.uploadMultipart(url, formData);
-  GetCorpus();
 
 }
 
@@ -351,8 +320,6 @@ function retrieveJson(catgory,datapath,filename){
    window.open('https://docusky.org.tw/docusky/webApi/getDataFileBinary.php?catpathfile='+catgory+"/"+datapath+"/"+filename);
    let transporter = docuskyJson.jsonTransporter;
    transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback(filename));
-   //transporter.retrieveJson(catgory, datapath, filename, null);
-   //alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));
 
 }
 
@@ -360,7 +327,7 @@ function retrieveJsonCallback(filename){
   alert(filename);
   let json = docuskyJson.jsonTransporter.jsonObj;
   alert(JSON.stringify(json));
-  /*
+/*
   var element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
   element.setAttribute('download', filename);
@@ -396,7 +363,6 @@ function renameDBDialogContent(oldname){
 function renameDB(){
   docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),null);
   $("#renameDBDialog").modal('hide');
-  alert("命名成功");
   GetCorpus();
 }
 
@@ -439,9 +405,10 @@ var downloadDocuXml = function (dbname) {
         }
     };
 
-    docuSkyObj.hideLoadingIcon(false);
+    docuSkyObj.hideLoadingIcon(true);
     alert("下載中，請稍候");
     docuSkyObj.getQueryResultDocuments(param, null, getDocList);
+
 
 };
 
