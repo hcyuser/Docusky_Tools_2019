@@ -43,6 +43,16 @@ function goToTop() {
   document.documentElement.scrollTop = 0;
 }
 
+function pinLeftControlBTM(selector){
+  if(selector.attr( 'style' )){
+    selector.removeAttr('style');
+  }else{
+    selector.attr( 'style', "position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;");
+  }
+  //alert(selector.attr( 'style' ));
+
+}
+
 function hideUploadTool(){
   if($("#DocManage").is(":visible")){
     $("#DocManageUploadTool").toggle();
@@ -356,12 +366,15 @@ function retrieveJson(catgory,datapath,filename){
 }
 
 function retrieveJsonCallback(filename){
-  alert(filename);
+
   let json = docuskyJson.jsonTransporter.jsonObj;
   alert(JSON.stringify(json));
-  /*
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
+
+  //var t=setTimeout("alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));",3000);
+
+
+  /*var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(docuskyJson.jsonTransporter.jsonObj)));
   element.setAttribute('download', filename);
   element.style.display = 'none';
   document.body.appendChild(element);

@@ -17,6 +17,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <script src="./userMainPage.js"></script>
     <style>
       #TOPBTN {
@@ -33,10 +34,24 @@
         padding: 8px;
         border-radius: 4px;
       }
+      #HideLeftControlPanel{
+        position: fixed;
+        bottom: 20px;
+        left: 40px;
+        z-index: 99;
+        font-size: 18px;
+        border: none;
+        outline: none;
+        background-color: #555;
+        color: white;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+      }
       #HideUploadTool {
         position: fixed;
         bottom: 20px;
-        left: 80px;
+        left: 60px;
         z-index: 99;
         font-size: 12px;
         border: none;
@@ -47,6 +62,7 @@
         padding: 8px;
         border-radius: 4px;
       }
+
       .UploadTool{
         position: -webkit-sticky;
         position: sticky;
@@ -116,20 +132,35 @@
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-3 text-center">
-      <button type="button" class="btn btn-info btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文件集管理</button>
-      <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理</button>
-    </div>
-    <div class="col-md-9 text-center" id="DocManage">
+    <div class="col-md-3 text-center" id="LeftControlPanel">
       <br>
-      <div id="DocManageUploadTool" class="m-2 border UploadTool">
+      <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
+        <br>
+        <div class="col-md-3">
+          <h4><i class="fas fa-paperclip" onclick="pinLeftControlBTM($(this).parent().parent().parent());"></i></h4>
+        </div>
+        <br>
+        <button type="button" class="btn btn-info btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文件集管理</button>
+        <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理</button>
+      </div>
+    </div>
+    <div class="col text-center"id="DocManage">
+      <br>
+      <div id="DocManageUploadTool" class="border UploadTool">
         <h3>新增文件集</h3>
           <form>
-            <div class="form-group form-inline">
-              資料庫名稱：<input type="text" id="UploadDBName" value="Default">
-              <label for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
-              <input type="file"   id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
-              <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
+            <div class="form-group form-inline ml-4">
+              <div class='form-row'>
+                <span class="form-control-plaintext pr-2" style="width:auto">
+                  資料庫名稱：
+                </span>
+                <input type="text" class='form-control' style='width: auto' id="UploadDBName" value="Default">
+              </div>
+              <div class="row">
+                <label class="control-label col-12 pl-0 ml-2" style="justify-content:left" for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
+                <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
+                <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
+              </div>
             </div>
           </form>
       </div>
@@ -152,15 +183,25 @@
         </table>
       </div>
     </div>
-    <div class="col-md-9 text-center" id="JsonManage">
+    <div class="col text-center" id="JsonManage">
       <br>
       <div id="JsonManageUploadTool" class="m-2 border UploadTool">
         <h3>新增Json資料</h3>
         <form>
           <div class="form-group form-inline">
-            類別：<input type="text" id="JsonCatgory" value="gis">
-            路徑：<input type="text" id="JsondataPath" value="web">
-            <input type="file" id='UploadJsonFileId' accept='.json' autocomplete='off' class="form-control-file col-5">
+            <div class="form-row  ml-4">
+              <span class="form-control-plaintext pr-2" style="width:auto">
+                類別：
+              </span>
+              <input type="text" id="JsonCatgory" class="form-control" style="width:auto" value="gis">
+            </div>
+            <div class="form-row ml-4">
+              <span class="form-control-plaintext pr-2" style="width:auto">
+                路徑：
+              </span>
+              <input type="text" id="JsondataPath" class="form-control" style="width:auto" value="web">
+            </div>
+            <input type="file" id='UploadJsonFileId' accept='.json,.csv,.txt' autocomplete='off' class="form-control-file col-5">
             <button type="button" onclick="UploadJson(event)" class="btn btn-dark">開始上傳</button>
           </div>
         </form>
@@ -261,7 +302,10 @@
     </div>
   </div>
 </div>
-<button onclick="goToTop()" id="TOPBTN">TOP</button>
-<button onclick="hideUploadTool()" id="HideUploadTool">隱藏上傳工具列</button>
+<div>
+  <button onclick="goToTop()" id="TOPBTN"><h6><i class="fas fa-angle-up"></i></h6></button>
+  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel"><h6><i class="fas fa-align-left"></i></i></h6></button>
+  <button onclick="hideUploadTool()" id="HideUploadTool"><h6><i class="far fa-eye-slash"></h6></i></button>
+</div>
 </body>
 </html>
