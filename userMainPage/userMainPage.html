@@ -147,6 +147,13 @@
     <div class="col text-center"id="DocManage">
       <br>
       <div id="DocManageUploadTool" class="border UploadTool">
+        <div class="text-right ml-4">
+          <div class="label label-default" onclick="hideUploadTool()">
+            <h6>
+              X隱藏
+            </h6>
+          </div>
+        </div>
         <h3>新增文件集</h3>
           <form>
             <div class="form-group form-inline ml-4">
@@ -186,6 +193,13 @@
     <div class="col text-center" id="JsonManage">
       <br>
       <div id="JsonManageUploadTool" class="m-2 border UploadTool">
+        <div class="text-right ml-4">
+          <div class="label label-default" onclick="hideUploadTool()">
+            <h6>
+              X隱藏
+            </h6>
+          </div>
+        </div>
         <h3>新增Json資料</h3>
         <form>
           <div class="form-group form-inline">
@@ -303,9 +317,9 @@
   </div>
 </div>
 <div>
-  <button onclick="goToTop()" id="TOPBTN"><h6><i class="fas fa-angle-up"></i></h6></button>
-  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel"><h6><i class="fas fa-align-left"></i></i></h6></button>
-  <button onclick="hideUploadTool()" id="HideUploadTool"><h6><i class="far fa-eye-slash"></h6></i></button>
+  <button onclick="goToTop()" id="TOPBTN"><h5><i class="fas fa-angle-up"></i></h5></button>
+  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel"><h5><i class="fas fa-align-left"></i></h5></button>
+  <button onclick="hideUploadTool()" id="HideUploadTool"><h5><i class="fas fa-eye"></i></h5></button>
 </div>
 </body>
 </html>
