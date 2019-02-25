@@ -175,15 +175,16 @@ function PrintJsonData(JsonData){
   for(catgory in JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
-     let itemcategory = "";
-     item.forEach(function(item,index){
-       if(index>0){
-         itemcategory += item;
+     let multipath = item[0];
+
+     item.forEach(function(it,index){
+       if(index!=(item.length-1)&& index!=0){
+         multipath = multipath + "/" + it;
        }
 
       });
-     //alert(item[0]+" "+ itemcategory);
-     TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>下載</button></td></tr>`;
+
+     TablePrefix += `<tr><td>` + catgory + `</td><td>` + multipath + `</td><td>` + item[item.length-1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>下載</button></td></tr>`;
     });
 
   }
