@@ -4,7 +4,13 @@ var docuskyDbObj = null;
 var JsonData = null;
 var tmp = {};
 var formData = [];
+var JsonFilename = "";
 $(document).ready( function () {
+  
+    if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)){
+      $('body > header .small-9.columns').hide();
+    }
+
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
@@ -359,27 +365,29 @@ function deleteJson(catgory, datapath, filename){
 function retrieveJson(catgory,datapath,filename){
    window.open('https://docusky.org.tw/docusky/webApi/getDataFileBinary.php?catpathfile='+catgory+"/"+datapath+"/"+filename);
    let transporter = docuskyJson.jsonTransporter;
-   transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback(filename));
+   JsonFilename = filename;
+   transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback);
    //transporter.retrieveJson(catgory, datapath, filename, null);
    //alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));
 
 }
 
-function retrieveJsonCallback(filename){
+function retrieveJsonCallback(){
 
   let json = docuskyJson.jsonTransporter.jsonObj;
-  alert(JSON.stringify(json));
+  //console.log(JSON.stringify(json));
+  //console.log(JsonFilename);
 
   //var t=setTimeout("alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));",3000);
 
 
-  /*var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(docuskyJson.jsonTransporter.jsonObj)));
-  element.setAttribute('download', filename);
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
+  element.setAttribute('download', JsonFilename);
   element.style.display = 'none';
   document.body.appendChild(element);
   element.click();
-  document.body.removeChild(element);*/
+  document.body.removeChild(element);
 
 }
 
