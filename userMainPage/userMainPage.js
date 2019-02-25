@@ -6,7 +6,7 @@ var tmp = {};
 var formData = [];
 var JsonFilename = "";
 $(document).ready( function () {
-  
+
     if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)){
       $('body > header .small-9.columns').hide();
     }
@@ -50,10 +50,13 @@ function goToTop() {
 }
 
 function pinLeftControlBTM(selector){
-  if(selector.attr( 'style' )){
+
+  if(selector.parent().parent().parent().attr( 'style' )){
+    selector.parent().parent().parent().removeAttr('style');
     selector.removeAttr('style');
   }else{
-    selector.attr( 'style', "position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;");
+    selector.parent().parent().parent().attr( 'style', "position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;");
+    selector.attr( 'style','background-color: darkred;');
   }
   //alert(selector.attr( 'style' ));
 
@@ -172,8 +175,15 @@ function PrintJsonData(JsonData){
   for(catgory in JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
-     //alert(item[0]+" "+ item[1]);
-    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>下載</button></td></tr>`;
+     let itemcategory = "";
+     item.forEach(function(item,index){
+       if(index>0){
+         itemcategory += item;
+       }
+
+      });
+     //alert(item[0]+" "+ itemcategory);
+     TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>下載</button></td></tr>`;
     });
 
   }
@@ -379,16 +389,17 @@ function retrieveJsonCallback(){
   //console.log(JsonFilename);
 
   //var t=setTimeout("alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));",3000);
+  let blob = new Blob([JSON.stringify(json)]);
+  saveAs(blob, JsonFilename);
 
-
+  /*
   var element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
   element.setAttribute('download', JsonFilename);
   element.style.display = 'none';
   document.body.appendChild(element);
   element.click();
-  document.body.removeChild(element);
-
+  document.body.removeChild(element);*/
 }
 
 function deleteXML(DB){
