@@ -14,22 +14,8 @@ $(document).ready( function () {
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
-    /*let param = {
-                target: 'USER',
-                db: docuSkyObj.db,
-                corpus: '[ALL]',
-                query: '.all',
-                page: docuSkyObj.page, // current page
-                pageSize: docuSkyObj.pageSize
-            };*/
-    //docuSkyObj.getQueryResultDocuments(param, null, null);
-    //$("body").hover(function() {
-    //    if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
-    //       docuSkyObj.hideWidget(true);
-    //    }
-    //});
     docuskyDbObj.loginSuccFunc = InitialAfterLogin;
-    //docuskyDbObj.manageDbList(null);
+
     $('#DocManageTable').DataTable();
     $('#GISManageTable').DataTable();
     $("#JsonManage").hide();
@@ -58,7 +44,6 @@ function pinLeftControlBTM(selector){
     selector.parent().parent().parent().attr( 'style', "position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;");
     selector.attr( 'style','background-color: darkred;');
   }
-  //alert(selector.attr( 'style' ));
 
 }
 
@@ -124,8 +109,7 @@ function  PrintDocManageTable(AllCorpus){
       }
 
     }
-    //console.log(webpage_search);
-    //CorpusGroup[ DB ].join( '<br>' )
+
     TablePrefix += `<tr><td>` + DB + `</td><td>`
                 + webpage_search + `</td><td>`
                 + status[DBStatus[ DB ]] + `</td><td>`
@@ -249,74 +233,6 @@ function UploadXMLBTN(event){
 
 }
 
-var uploadMultipart = function(url, data) {
-   alert('uploading...');
-        var mul = buildMultipart(data);
-        $.ajax({
-            url: url,
-            data: mul.data,
-            processData: false,
-            type: "post",
-            //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
-            contentType: "multipart/form-data; boundary=" + mul.myBoundary,
-            xhr: function() {
-                var xhr = $.ajaxSettings.xhr();
-                // upload progress
-                xhr.upload.addEventListener("progress", function(evt) {
-                    if (evt.lengthComputable) {
-                        var position = evt.loaded || evt.position;
-                        var percentComplete_f = position / evt.total * 100;	// 20170302
-                        var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
-                        var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
-                        $("#" + uploadProgressId + " .ds-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
-                        //$("#" + uploadProgressId).text(percentComplete_i + '%' + r);
-                    }
-                }, false);     // true: event captured in capturing phase, false: bubbling phase
-                return xhr;
-            },
-            success: function(data, status, xhr) {
-                if (data.code == 0) {              // successfully get db list
-                    alert(data.message);
-                }
-                else {
-                    alert("Error: " + data.code + '\n' + data.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                //var err = eval("(" + xhr.responseText + ")");
-                alert(error);
-            }
-        });
-
-    };
-
-    var buildMultipart = function(data) {
-        var key, crunks = [], myBoundary;
-        myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
-        myBoundary = '(-----------docusky:' + myBoundary + ')';
-
-        for (var key in data){
-            if (key == "file") {
-                crunks.push("--" + myBoundary + '\r\n' +
-                    "Content-Disposition: form-data; name='" + data[key].name + "'; filename='" + data[key].filename + "'" + '\r\n' +
-                    'Content-Type: application/octet-stream\r\n' +
-                    'Content-Transfer-Encoding: binary\r\n\r\n' +
-                    data[key].value);
-            }
-            else{
-                crunks.push("--" + myBoundary + '\r\n' +
-                    "Content-Disposition: form-data; name='" +
-                    data[key].name + "'" +
-                    '\r\n\r\n' +
-                    data[key].value);
-            }
-        }
-
-        return {
-            myBoundary: myBoundary,
-            data: crunks.join('\r\n') + '\r\n--' + myBoundary + "--"
-        };
-    };
 
 function UploadJson(event){
   event.preventDefault();
@@ -378,29 +294,15 @@ function retrieveJson(catgory,datapath,filename){
    let transporter = docuskyJson.jsonTransporter;
    JsonFilename = filename;
    transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback);
-   //transporter.retrieveJson(catgory, datapath, filename, null);
-   //alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));
 
 }
 
 function retrieveJsonCallback(){
 
   let json = docuskyJson.jsonTransporter.jsonObj;
-  //console.log(JSON.stringify(json));
-  //console.log(JsonFilename);
-
-  //var t=setTimeout("alert(JSON.stringify(docuskyJson.jsonTransporter.jsonObj));",3000);
   let blob = new Blob([JSON.stringify(json)]);
   saveAs(blob, JsonFilename);
 
-  /*
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
-  element.setAttribute('download', JsonFilename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);*/
 }
 
 function deleteXML(DB){
@@ -428,7 +330,6 @@ function renameDBDialogContent(oldname){
 function renameDB(){
   docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),null);
   $("#renameDBDialog").modal('hide');
-  alert("命名成功");
   GetCorpus();
 }
 
