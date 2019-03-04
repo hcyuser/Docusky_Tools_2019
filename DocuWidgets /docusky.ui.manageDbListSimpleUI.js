@@ -482,7 +482,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          if (data.code == 0) {          // successfully get db list
 
             me.dbList = data.message;
-            
+
             if(evt){
               var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
               var jelement = $("#" + dbListContainerId);
@@ -601,6 +601,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          error: function(xhr, status, error) {
             //var err = eval("(" + xhr.responseText + ")");
             $("#" + me.uploadProgressId).hide();
+            var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+            $("#"+loadingContainerId).hide();
             alert(error);
             //ert(xhr.responseText);
          }
