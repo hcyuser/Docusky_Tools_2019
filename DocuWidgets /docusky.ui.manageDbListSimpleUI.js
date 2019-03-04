@@ -10,7 +10,7 @@
  * @version
  * 0.01 (May xx 2016)
  * 0.02 (August xx 2016)
- * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts) 
+ * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts)
  * 0.04 (March 01 2017) add simple message for upload progress
  * 0.05 (April 23 2017) add hideWidget() and modify some codes to let invoker better use widget functions
  * 0.06 (July 28 2017)  set some functions as "private" methods (and fix some bugs)
@@ -18,27 +18,27 @@
  * 0.08 (January 28 2017) add enableWidgetEvent(), disableWidgetEvent() to allow db/corpus callback
  * 0.09 (January 30 2018) expose login() and uploadMultipart(), and add with credentials to allow CORS requests
  * 0.10 (May 13 2018) add default 'corpusClick' function
- * 0.11 (Feb 19 2019) add renameDbTitle, getUserProfile function (modify widgetEvents so that the callback func 
+ * 0.11 (Feb 19 2019) add renameDbTitle, getUserProfile function (modify widgetEvents so that the callback func
  *                    has evt in the first arg and this in the second arg)
- * 
+ *
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
  * @license
  *
  */
- 
+
 if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
    alert("抱歉，DocuSky 工具目前只支援 Firefox 與 Chrome");
 }
 
 var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    var me = this;                           // stores object reference
-   
+
    me.package = 'docusky.ui.manageDbListSimpleUI.js';      // 主要目的：取得給定 db, corpus 的文件
    me.version = 0.10;
    me.idPrefix = 'DbList_';                 // 2016-08-13
-   
+
    me.utility = null;
    me.protocol = null;                      // 'http',
    me.urlHostPath = null;
@@ -50,9 +50,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.urlLogout = null;
    me.username = '';
    me.loginCallback = null;               // 儲存當前欲執行的函式（成功登入後將自動呼叫）
-   me.callerEvent = null;                 
+   me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
-   me.initialized = false;                
+   me.initialized = false;
    me.dbList = [];                        // 儲存 DocuSky 的 user databasees 列表
    me.fileName = '';                      // 欲上傳檔案（在本地）的名稱
    me.fileData = '';                      // 欲上傳檔案的內容
@@ -62,11 +62,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
    me.loadingIconWidth = 140;             // 2018-01-07: 參考 docusky.ui.getDbCorpusDocumentsSimpleUI
    me.displayLoadingIcon = true;          // 2018-01-07
-   
+
    me.displayWidget = true;               // 2017-07-24
    me.widgetEvents = { dbClick: null,     // null: disable clicking db -- can be set from invoker as obj.widgetEvents.dbClick=function(s){...}, where s will be the db title
                        corpusAttCntClick: null,                // 2018-01-08: 若 enable 此項，則 corpusClick/attCntClick 將失效
-                       corpusClick:                            
+                       corpusClick:
                           function(evt, obj, db, corpus) {     // 2018-05-13: default function ==> open a new window to display db+corpus content
                              var url = me.urlWebApiPath + "/webpage-search-3in1.php?db=" + db + "&corpus=" + corpus;
                              window.open(url, "_blank");
@@ -76,7 +76,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.validEvtKeys = ['dbClick', 'corpusAttCntClick', 'corpusClick', 'attCntClick'];
    me.loginSuccFunc = null;                // 2019-02-19
    me.loginFailFunc = null;
-   
+
    // =================================
    //       main functions
    // =================================
@@ -85,7 +85,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       //var scriptPath = me.utility.getScriptPath();
       //me.urlHostPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
       // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy'));
+      me.urlHostPath = "https://docusky.org.tw/DocuSky";
       //alert(me.urlHostPath);                  // e.g., http://localhost:8000/PHP5/DocuSky
       me.urlWebApiPath = me.urlHostPath + '/webApi';
       me.urlGetDbListJson =  me.urlWebApiPath + '/getDbListJson.php';
@@ -109,7 +109,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var loginSubmitId = me.idPrefix + "loginSubmit" + me.uniqueId;
       var closeLoginButtonId = me.idPrefix + "closeLoginButton" + me.uniqueId;
       var loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
-      
+
       var s = "<div id='" + loginContainerId + "' class='dsw-container'>"
 			   + "<div id='" + loginContainerOverlayId + "' class='dsw-overlay'></div>"
             + "<div class='dsw-titleBar'><table><tr><td class='dsw-titleContainer'><div class='dsw-titlename'>DocuSky Login</div></td><td class='dsw-closeContainer' id='" + closeLoginContainerId + "'><span class='dsw-btn-close' id='" + closeLoginButtonId + "'>&#x2716;</span></td></tr></table></div>"
@@ -124,7 +124,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             + "</div>";
       $("html").append(s);             // 呃, 用 body 有時會出問題？
       $("#" + loginContainerId).hide();
-      
+
       $("#" + loginSubmitId).click(function(e) {
          me.login($("#" + dsUsernameId).val(), $("#" + dsPasswordId).val(), me.loginSuccFunc, me.loginFailFunc);    // 2018-01-30
       });
@@ -133,7 +133,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.hideWidget();
       });
 
-      // dbListContainer container  
+      // dbListContainer container
       var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
       var dbListContentId = me.idPrefix + "dbListContent" + me.uniqueId;
       var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
@@ -145,13 +145,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var dbTitleForImportId = me.idPrefix + "dbTitleForImport" + me.uniqueId;
       var uploadFormId = me.idPrefix + "uploadForm" + me.uniqueId;
       var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
-	  
+
       var myVer = me.package + " - Ver " + me.version;
       var t = "登出";
       var s = "<div id='" + dbListContainerId + "' class='dsw-container'>"
-            + "<div class='dsw-titleBar'>" 
+            + "<div class='dsw-titleBar'>"
             + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>資料庫文獻集列表</div></td>"
-            + "<td class='dsw-closeContainer'><div class='dsw-btn-close' id='" + closeDbListId + "'>&#x2716;</div><span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span><span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span></td></tr></table>" 
+            + "<td class='dsw-closeContainer'><div class='dsw-btn-close' id='" + closeDbListId + "'>&#x2716;</div><span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span><span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span></td></tr></table>"
             + "</div>"
             + "<div id='" + dbListContentId + "' class='dsw-containerContent'>"
             + "</div>"
@@ -170,7 +170,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             + "</div>";
       $("html").append(s);
       $("#" + dbListContainerId).hide();
-      
+
       $("#" + logoutAnchorId).click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -191,7 +191,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       $("#" + closeDbListId).click(function(e) {
          me.hideWidget();              // 2017-04-18
       });
-      
+
       $("#" + uploadXmlToBuildDbId).click(function(e) {
          e.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
          //var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
@@ -203,7 +203,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          //alert(JSON.stringify(formData));
          me.uploadMultipart(url, formData);
       });
-      
+
       // loadingContainer
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
@@ -219,7 +219,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
       me.initialized = true;
    };
-   
+
    me.login = function(username, password, succFunc, failFunc) {      // 2018-01-30: expose login()
       // login and shows DbList
       //$.ajaxSetup({async:false});
@@ -245,7 +245,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-   
+
    me.hideWidget = function(bool) {
       me.displayWidget = (bool === false);      // only hide when parameter equals false
       //alert(me.displayWidget);
@@ -258,7 +258,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.enableRefresh = false;
       }
    };
-   
+
    // 2018-01-07
    me.hideLoadingIcon = function(bool) {
       me.displayLoadingIcon = (bool === false);
@@ -270,15 +270,15 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.widgetEvents[evtKey] = callback;
       }
    }
-   
+
    me.disableWidgetEvent = function(evtKey) {
       if (me.validEvtKeys.indexOf(evtKey) !== false) me.widgetEvents[evtKey] = null;
    }
-   
+
    var displayDbList = function(evt, succFunc) {
       var dbList = me.dbList;
       //alert(JSON.stringify(dbList, null, '\t'));
-      
+
       var refreshDbList = false;
 
       var contentTableId = me.idPrefix + "contentTable" + me.uniqueId;
@@ -301,9 +301,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             var attCnt = attCntList[j];
             var t2 = "";
             if (me.widgetEvents.corpusAttCntClick) {
-               var t1 = "<span class='dsw-corpusAttCntClick' x-db='" + db + "' x-corpus='" + corpus + "'>" 
+               var t1 = "<span class='dsw-corpusAttCntClick' x-db='" + db + "' x-corpus='" + corpus + "'>"
                       + corpus
-                      + (attCnt > 0 ? " [" + attCnt + "]" : "") 
+                      + (attCnt > 0 ? " [" + attCnt + "]" : "")
                       + "</span>";
             }
             else {
@@ -312,12 +312,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                   t2 = (me.widgetEvents.attCntClick) ? "<span class='dsw-attCntClick' x-db='" + db + "' x-corpus='" + corpus + "'> [" + attCnt + "]</span>" : "[" + attCnt + "]";
                }
             }
-            corpusListStr += "<span class='dsw-dbList-corpusnames-corpusname'>" 
+            corpusListStr += "<span class='dsw-dbList-corpusnames-corpusname'>"
                           + t1 + t2
                           + "</span>";
          }
          corpusListStr += "</div>";
-		 
+
          var t = (me.widgetEvents.dbClick) ? "<span class='dsw-dbClick' x-db='" + db + "'>" + db + "</span>" : db;
          s += "<tr class='dsw-tr-dbcorpuslist'>"
            +  "<td class='dsw-td-dbList dsw-td-dbList-dbname'>" + t + "</td>"
@@ -327,11 +327,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       }
 
       s += "</table>";
-      
+
       $("#" + dbListContentId).html(s);
       var w = $("#" + contentTableId).width();
       // $("#" + dbListContentId).width(800);	// 20170224
-      
+
       $("span.dsw-dbClick").on("click", function(evt) {
          me.hideWidget();
          if (typeof me.widgetEvents.dbClick === 'function') me.widgetEvents.dbClick(evt,this,$(this).attr("x-db"));
@@ -361,7 +361,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.fileName = files[0].name;          // store to object value (only the first file)
          var fileSize = files[0].size;
          if (fileSize > this.fileSizeLimit) {
-            alert("Error\n" + 
+            alert("Error\n" +
                   "The size of " + this.fileName + " (" + fileSize + ") exceeds upload limit\n" +
                   "Upload limit size: " + this.fileSizeLimit);
             this.fileData = '';               // if upload empty string, DocuSky will return 'invalid XML' message
@@ -376,7 +376,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             $("#" + uploadXmlToBuildDbId).prop('disabled', false);
          });
       });
-      
+
       $(".deleteDb").click(function(e) {
          e.preventDefault();         // prevent default anchor action
 
@@ -407,7 +407,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.timeoutFunId = setTimeout(function() { me.manageDbList(evt, null); }, 15000);      // 15 seconds
       }
    };
-   
+
    // 2019-02-17: public function
    me.renameDbTitle = function(oldDbTitle, newDbTitle, succFunc) {
       if (!me.initialized) init();
@@ -431,7 +431,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json');
    }
-   
+
    // 2019-02-19
    me.getUserProfile = function(evt, succFunc) {
       if (!me.initialized) init();
@@ -460,7 +460,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.manageDbList = function(evt, succFunc) {
       //if (!me) { var me = this; }
       if (!me.initialized) init();
-      
+
       me.callerEvent = evt;
       me.callerCallback = succFunc;
       me.loginCallback = me.displayDbList;
@@ -471,7 +471,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       // winWidth = $('body').innerWidth();
       // var scrollbarWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - Local.winWidth;
       var winHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-      
+
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       var loginContainerOverlayId = me.idPrefix + "loginContainerOverlay" + me.uniqueId;
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
@@ -480,25 +480,32 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.get(me.urlGetDbListJson, function(data) {
          if (data.code == 0) {          // successfully get db list
-            var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
-            var jelement = $("#" + dbListContainerId);
-            var w = jelement.width();
-            var h = jelement.height();
-            var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
-            var posLeft = Math.max(10, evt.pageX - overX - 40);
-            var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
-            //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
-            var posTop = evt.pageY + 5;
-            jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
-            $("#" + dbListContainerId).show();
+
             me.dbList = data.message;
             
+            if(evt){
+              var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
+              var jelement = $("#" + dbListContainerId);
+              var w = jelement.width();
+              var h = jelement.height();
+              var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
+              var posLeft = Math.max(10, evt.pageX - overX - 40);
+              var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
+              //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
+              var posTop = evt.pageY + 5;
+              jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
+              $("#" + dbListContainerId).show();
+
+            }
+
             // 2017-07-22
             if (typeof me.callerCallback === "function") {
                me.hideWidget(me.displayWidget);
                me.callerCallback();
             }
-            else displayDbList(evt);
+            else{
+              displayDbList(evt);
+            }
          }
          else if (data.code == 101) {             // requires login
             $("#" + loginContainerId).show();
@@ -519,25 +526,25 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-   
-   
+
+
    // for multipart file upload
    var readFile = function(file) {
       var loader = new FileReader();
       var def = $.Deferred(), promise = def.promise();
-   
+
       //--- provide classic deferred interface
       loader.onload = function (e) { def.resolve(e.target.result); };
       loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
       loader.onerror = loader.onabort = function (e) { def.reject(e); };
       promise.abort = function () { return loader.abort.apply(loader, arguments); };
-   
+
       //loader.readAsBinaryString(file);
       loader.readAsText(file, 'UTF-8');         // 不能用 binary 讀入，會變成亂碼
-   
+
       return promise;
    };
-   
+
    // 2017-08-09: open uploadMultipart() method
    me.uploadMultipart = function(url, data, callback) {       // 2017-04-23: add callback
       var mul = buildMultipart(data);
@@ -556,7 +563,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             var xhr = $.ajaxSettings.xhr();
             // upload progress
             xhr.upload.addEventListener("progress", function(evt) {
-               if (evt.lengthComputable) {  
+               if (evt.lengthComputable) {
                   var position = evt.loaded || evt.position;
 				      var percentComplete_f = position / evt.total * 100;	// 20170302
                   var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
@@ -567,11 +574,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             }, false);     // true: event captured in capturing phase, false: bubbling phase
             //// download progress
             //xhr.addEventListener("progress", function(evt){
-            //   if (evt.lengthComputable) {  
+            //   if (evt.lengthComputable) {
             //      var percentComplete = evt.loaded / evt.total;
             //      //Do something with download progress
             //   }
-            //}, false); 
+            //}, false);
             return xhr;
          },
          success: function(data, status, xhr) {
@@ -601,12 +608,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 	   $("#" + me.uploadProgressId).find(".dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
       //$("div.dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
    };
-   
+
    var buildMultipart = function(data) {
       var key, chunks = [], myBoundary;
       myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
       myBoundary = '(-----------docusky:' + myBoundary + ')';
-   
+
       for (var key in data) {
          if (key == "file") {
             chunks.push("--" + myBoundary + "\r\n" +
@@ -621,15 +628,15 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                data[key].value);
          }
       }
-   
+
       return {
          myBoundary: myBoundary,
          data: chunks.join("\r\n")+"\r\n--"+myBoundary+"--"
       };
    };
-   
+
    //// 動態載入 utility functions
-   me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   //me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
    me.utility = docuskyWidgetUtilityFunctions;
    if (!me.initialized) init();
 
@@ -651,7 +658,7 @@ var docuskyWidgetUtilityFunctions = {
       }
       return '';
    },
-   
+
    //getScriptPath: function() {
    //   var ua = window.navigator.userAgent;
    //   var msie = ua.indexOf("MSIE ");
@@ -671,7 +678,7 @@ var docuskyWidgetUtilityFunctions = {
    //      file: pathParts[6]
    //   };
    //},
-   
+
    basename: function(path) {
       return path.replace(/.*[/]/, "");
    },
@@ -679,14 +686,14 @@ var docuskyWidgetUtilityFunctions = {
    dirname: function(path) {
       return path.match(/(.*)[/]/)[1];
    },
-   
+
    uniqueId: (function() {
       var counter = 0;
       return function() {
          return "_" + counter++;
       }
    })(),
-   
+
    getDateStr: function(d, separator) {
       if (typeof separator == "undefined") separator = '';
       var twoDigitsMonth = ("0" + (d.getMonth()+1)).slice(-2);      // slice(-2) to get last 2 chars
@@ -694,7 +701,7 @@ var docuskyWidgetUtilityFunctions = {
       var strDate = d.getFullYear() + separator + twoDigitsMonth + separator + twoDigitsDay;
       return strDate;
    },
-   
+
    //copyArray: function(o) {
    //   var output, v, key;
    //   output = Array.isArray(o) ? [] : {};
@@ -711,7 +718,7 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
-   
+
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
@@ -720,7 +727,7 @@ var docuskyWidgetUtilityFunctions = {
       script.defer = true;        // script will not run until after the page has loaded
       document.getElementsByTagName('head').item(0).appendChild(script);
    }
- 
+
 };
 
 // 20170302, 20180319: CSS injection
@@ -781,4 +788,3 @@ $('head').append('<style id="dsw-simplecomboui">'
 // ----------------------------------------------------------------------------------
 // initialize widget
 var docuskyManageDbListSimpleUI = new ClsDocuskyManageDbListSimpleUI();
-

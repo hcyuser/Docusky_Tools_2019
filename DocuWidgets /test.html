@@ -1,0 +1,137 @@
+
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+   <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <script src="./docusky.ui.manageDbListSimpleUI.js"></script>
+   <script src="./docusky.ui.getDbCorpusDocumentsSimpleUI.js"></script>
+   <script src="./docusky.ui.manageDataFileListSimpleUI.js"></script>
+   <style type="text/css">
+      span.modifyDocButton { background-color:brown; border:2px brown solid; border-radius:4px; color:white; font-size:smaller; padding:2px; cursor:pointer }
+      div.boxContainer { position:absolute; left: 55px; top: 20px; width:800px; height:auto;
+                         z-index:1009;
+                         background-color: #CFCFCF;
+                         border:2px solid #5F5F8F; border-radius:4px;
+                         box-shadow: 7px 7px 7px 0px grey;
+                         display:none; }
+      img.clickableIcon:hover { cursor: pointer }
+   </style>
+</head>
+<body>
+   <div id="HeaderBar">
+      <span id="manageDbList" style="padding:3px; border:green 2px solid; background:green; color:white; border-radius:3px; cursor:pointer">管理文獻集</span>
+      <span id="getDocuSkyDocs" style="padding:3px; border:green 2px solid; background:green; color:white; border-radius:3px; cursor:pointer;">點我取得文件內容</span>
+      <span id="manageDataFiles" style="padding:3px; border:green 2px solid; background:green; color:white; border-radius:3px; cursor:pointer;">管理資料檔</span>
+   </div>
+   <br/><br/>
+   <div id="divContent" class="divContent">
+   </div>
+
+   <div id="divModofyDoc" class="boxContainer">
+      <div id="divModifyDocTitleBar" class="titleBar">
+         <table width="100%" style="background-color:navy; color:white; margin:1px;">
+            <tr>
+               <td width="95%" align="center"></td>
+               <td align="right">
+                  <img width="16" src="https://docusky.org.tw/DocuSky/webApi/images/close-button.jpg"
+                       class="clickableIcon" onclick="$('#divModofyDoc').toggle()"/>
+               </td>
+            </tr>
+         </table>
+      </div>
+      <div id="divModifyDocContent" class="contentArea">
+         <textarea id="textareaDocContent" style="width:792px; height:270px"></textarea>
+      </div>
+      <center style="padding:5px; margin:3px;"><button id="modifyDocSubmit">儲存修改</button></center>
+   </div>
+</body>
+<script>
+
+var docuSkyDbObj = null;
+var docuSkyGetDocsObj = null;
+var docuSkyDataFilesObj = null;
+
+// 必須等所有資源都載入才執行，因此不是 $(document).ready()
+// 另外，沒有直接使用 window.onload = function() {...} 是因為若有多個 window.onload，會產生
+// 前者被後者覆蓋的問題。jQuery 會處理這樣的狀況：遇到多個 $(window).ready()，會串接起來執行
+$(window).ready(function() {
+   var me = this;
+   docuSkyDbObj = docuskyManageDbListSimpleUI;
+   docuSkyGetDocsObj = docuskyGetDbCorpusDocumentsSimpleUI;
+   docuSkyDataFilesObj = docuskyManageDataFileListSimpleUI;
+
+   $("#manageDbList").click(function(e) {
+      docuSkyDbObj.manageDbList(e);
+   });
+
+   $("#getDocuSkyDocs").click(function(e) {
+      var target = 'USER';
+      var db = '', corpus = '';             // empty string: force the simpleUI to display a menu for user selection
+      docuSkyGetDocsObj.getDbCorpusDocuments(target, db, corpus, e, window.displayDocList);
+   });
+
+   $("#manageDataFiles").click(function(e) {
+      docuSkyDataFilesObj.manageDataFileList(e);
+   });
+});
+
+var docuSkyGetDocsObj = docuskyGetDbCorpusDocumentsSimpleUI;
+
+function displayDocList() {
+   // 顯示從 DocuSky 取得的文獻集內容
+   //alert("Docs: " + docuSkyGetDocsObj.docList.length);
+   var s = '';
+   s += "<div style='background-color:#DFDFDF'>" + docuSkyGetDocsObj.target + ': ' + docuSkyGetDocsObj.db + '/' + docuSkyGetDocsObj.corpus + "</div>";
+   s += "<p>Chapters: " + docuSkyGetDocsObj.docList.length + "</p>";
+   s += "<table width='100%'>";
+   for (var i=0; i<docuSkyGetDocsObj.docList.length; i++) {
+      var docWithInfo = docuSkyGetDocsObj.docList[i];
+      var doc = docWithInfo.docInfo;
+      var t = "<tr><td><b>" + docWithInfo.number + ". " + doc.docFilename + "</b></td>"
+            + "    <td align='right' style='padding-top:3px; padding-bottom:8px'><span class='modifyDocButton' data-chapter='" + i + "'>修改內容</span></td></tr>"
+            + "<tr><td id='contentChapter_" + i + "' colspan='2'>" + doc.docContentXml + "</td></tr>";
+      if (i < docuSkyGetDocsObj.docList.length - 1) t += "<tr><td colspan='2'2><hr/></td></tr>";
+      s += t;
+   }
+   s += "</table>";
+   $("#divContent").html(s);
+
+   $("#divModofyDoc").draggable({
+      containment: 'window',
+      scroll: false,
+      handle: '#divModifyDocTitleBar'
+   });
+
+   $("span.modifyDocButton").click(function() {
+      var curTop = $(this).offset().top;
+      var chapter = $(this).data('chapter');         // retrieve the "data-chapter" attribute value
+      //alert(chapter);
+      $("#textareaDocContent").val(docuSkyGetDocsObj.docList[chapter].docInfo.docContentXml);
+      $("#divModofyDoc").css("top", curTop + 10);
+      $("#divModofyDoc").show();
+      $("#modifyDocSubmit").attr('data-chapter', chapter);
+   });
+
+   $("#modifyDocSubmit").click(function() {
+      var chapter = $(this).data('chapter');         // retrieve the "data-chapter" attribute value
+      //alert(chapter);
+      var docWithInfo = docuSkyGetDocsObj.docList[chapter];
+      var docInfo = docWithInfo.docInfo;
+      docInfo.docContentXml = $("#textareaDocContent").val();
+      // update document
+      var db = docuSkyGetDocsObj.db;
+      var corpus = docuSkyGetDocsObj.corpus;
+      docuSkyGetDocsObj.updateDocument(db, corpus, docInfo);
+      // refresh content
+      var tdId = "contentChapter_" + chapter;
+      $("#" + tdId).html(docInfo.docContentXml);
+      $("#divModofyDoc").fadeOut();
+   });
+}
+
+</script>
+</html>

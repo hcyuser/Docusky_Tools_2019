@@ -12,7 +12,7 @@
  * 0.02 (August 30 2016)
  * 0.03 (December 20 2016) adds PostClassification and TagAnalysis functions
  * 0.04 (January 18 2017) adds channelBuffer support
- * 0.05 (January 24 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts) 
+ * 0.05 (January 24 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts)
  *                        also fix channelBuffer problems in async mode
  * 0.06 (June 19 2017) modify the position of dynamic icons (change "none" to "fix")
  * 0.07 (July 17 2017) add hideLoadingIcon(), hideWidget()
@@ -21,14 +21,14 @@
  * 0.10 (Oct 06 2018)  add a showPublicDbLink to login container for accessing open databases
  * 0.11 (Oct 15 2018)  add some functions to support future providers API
  * 0.12 (Dec 02 2018)  add replaceDocument(), corpus list resizable()
- * 
+ *
  * @copyright
  * Copyright (C) 2016-2018 Hsieh-Chang Tu
  *
  * @license
  *
  */
- 
+
 if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
    alert("抱歉，DocuSky 工具目前只支援 Firefox 與 Chrome");
 }
@@ -42,7 +42,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    this.showPublicDbLink = true;                    // 2018-09-30, 2018-10-15
    this.enableGetProviderList = true;               // 設定是否嘗試從 api 取得 providers（需 DocuSky 支援 provider api）
-   
+
    this.utility = null;
    this.protocol = null;                            // 'http',
    this.urlScriptPath = null;
@@ -55,7 +55,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.urlUpdateCorpusDocumentJson = null;
    this.urlReplaceSingleCorpusDocJson = null;       // 2018-10-15
    this.urlGetProviderListJson = null;              // 2018-10-12
-   
+
    this.callerEvent = null;
    this.callerCallback = null;                      // 儲存成功執行後所需呼叫的函式
    this.callerCallbackParameters = null;            // 儲存回呼函式的傳入參數
@@ -65,15 +65,15 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.corpus = '';
    this.query = '';                                 // 儲存最後一個 query
    this.fieldsOnly = undefined;                     // 2018-09-14
-   
+
    this.loadingIconWidth = 140;                     // 2017-06-19: size of the loading image
    this.displayLoadingIcon = true;                  // 2017-07-13
    this.displayWidget = true;                       // 2017-07-24
-   
+
    // login action
    this.loginInvokeFun = null;
    this.loginInvokeFunParameters = null;
-   
+
    // returns
    this.totalFound = 0;
    this.page = 1;
@@ -84,15 +84,15 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.features = '';
    this.tagAnalysis = {};
    this.channelBuffer = {};                    // store query results in "channels" (access by channelKey)
-   
+
    // extra data
    this.providerList = [];                     // 2018-10-12
    this.uiState = {};                          // 2018-12-02: uiState[dbCorpusListContainerId] = {size: { width:w, height: h}}
-   
+
    if (typeof(param)=='object' && 'target' in param) {
       me.target = (param.target.toUpperCase() == 'OPEN') ? 'OPEN' : 'USER';
    }
-   
+
    // =================================
    //       main functions
    // =================================
@@ -101,26 +101,26 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //var scriptPath = me.utility.getScriptPath();
       //me.urlScriptPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
       // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlScriptPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy'));
+      me.urlScriptPath = "https://docusky.org.tw/DocuSky";
       me.urlWebApiPath = me.urlScriptPath + '/WebApi';
-      let pathParts = me.scriptPath.match(/(http[s]?|file):\/\/([^\/]+)\/((.+)\/)?/);
-      
+      //let pathParts = me.scriptPath.match(/(http[s]?|file):\/\/([^\/]+)\/((.+)\/)?/);
+
       let scheme = location.protocol.substr(0, location.protocol.length-1);
       let pos = me.urlWebApiPath.split('/', 3).join('/').length;    // find the 3rd occurrence of '/'
       let urlPath = me.urlWebApiPath.substr(pos);
       let curProvider = { title: 'Current',
                           type: 'api',
                           urlScheme: 'https',
-                          urlHost: pathParts[2],
+                          urlHost: 'docusky.org.tw',
                           urlPort: '443',
                           urlPath: urlPath,
                           description: 'Current'};
       me.providerList.push(curProvider);
       setUrlApiPath(me, curProvider);
-      
+
       me.uniqueId = me.utility.uniqueId();
       //alert(me.uniqueId);
-      
+
 
       // login container
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
@@ -132,7 +132,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var closeLoginButtonId = me.idPrefix + "closeLoginButton" + me.uniqueId;
       var loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
       var showProviderListId = me.idPrefix + "showProviderList" + me.uniqueId;
-      
+
       var myVer = me.package + " - Ver " + me.version;
       var myProvider = (me.enableGetProviderList) ? "&nbsp;P&nbsp;" : "";
       var s = "<div id='" + loginContainerId + "' class='dsw-container'>"
@@ -154,7 +154,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             + "</div>";
       $("html").append(s);
       $("#" + loginContainerId).hide();
-      
+
       $("#" + loginSubmitId).click(function(e) {
          login($("#" + dsUsernameId).val(), $("#" + dsPasswordId).val());
       });
@@ -166,12 +166,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          displayProviderList(curProvider, e);
          $("#" + providerListContainerId).fadeIn();
       });
-      
+
       $("span.dsw-listOpenCorpuses").click(function(e) {       // 2018-09-30
          //alert($(this).attr('id'));
          $("#" + loginContainerId).hide();
          var param = { target: 'OPEN',
-                       invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'}; 
+                       invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
          displayDbCorpusList(param, e);
       });
 
@@ -181,7 +181,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var providerListContentId = me.idPrefix + "providerListContent" + me.uniqueId;
       var closeProviderListContainerId = me.idPrefix + "closeProviderListContainer" + me.uniqueId;
       var closeProviderListButtonId = me.idPrefix + "closeProviderListButton" + me.uniqueId;
-      
+
       var s = "<div id='" + providerListContainerId + "' class='dsw-container' style='border-color:#3F3F3F; z-index:1002'>"
 			   + "<div id='" + providerListContainerOverlayId + "' class='dsw-overlay'></div>"
             + "<div id='" + providerListContainerId + "_TitleBar' class='dsw-titleBar'>"
@@ -197,7 +197,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             + "</div>";
       $("html").append(s);
       $("#" + providerListContainerId).hide();
-      
+
       $("#" + closeProviderListButtonId).click(function(e) {
          $("#" + providerListContainerId).fadeOut();
       });
@@ -206,9 +206,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          containment: 'window',           // 2018-10-13: move within the 'window' box
          handle: '#' + providerListContainerId + '_TitleBar'
       });                                 // 2018-12-02: .resizable()
-      
+
       // dbCorpusListContainer container
-      var dbCorpusListContainerId = me.idPrefix + "dbCorpusListContainer" + me.uniqueId;  
+      var dbCorpusListContainerId = me.idPrefix + "dbCorpusListContainer" + me.uniqueId;
       var dbCorpusListContainerOverlayId = me.idPrefix + "dbCorpusListContainerOverlay" + me.uniqueId;
       var closeDbCorpusListButtonId = me.idPrefix + "closeDbCorpusListButton" + me.uniqueId;
       var closeDbCorpusListContainerId = me.idPrefix + "closeDbCorpusListContainer" + me.uniqueId;
@@ -230,7 +230,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             + "</div>";
       $("html").append(s);
       $("#" + dbCorpusListContainerId).hide();
-		
+
 	   $("#" + logoutDBId).click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -248,12 +248,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 		   // Clear out obtained document list
 		   me.docList = [];
       });
-		
+
       $("#" + closeDbCorpusListButtonId).click(function(e) {
          $("#" + dbCorpusListContainerOverlayId).show();
          $("#" + dbCorpusListContainerId).fadeOut();
       });
-      
+
       // loadingContainer
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
@@ -266,7 +266,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
               "</div>";
       $("html").append(s);
       $("#" + loadingContainerId).hide();
-      
+
       // 2018-10-12: set provider list
       if (me.enableGetProviderList) {
          // location.procotol contains ':'
@@ -276,7 +276,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                if (retObj.code == 0) {
                   var curProvider = me.providerList[0];
                   retObj.message.forEach(function(item, idx) {
-                     if (item.urlScheme.toLowerCase() != curProvider.urlScheme.toLowerCase() 
+                     if (item.urlScheme.toLowerCase() != curProvider.urlScheme.toLowerCase()
                          || item.urlHost.toLowerCase() != curProvider.urlHost.toLowerCase()
                          || item.urlPort.toLowerCase() != curProvider.urlPort.toLowerCase()
                          || item.urlPath.toLowerCase() != curProvider.urlPath.toLowerCase()) {
@@ -297,12 +297,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                if (me.providerList.length <= 1) $("#" + showProviderListId).hide("");
             });
       };
-      
+
       // 2017-01-17: clear variables
       me.channelBuffer = {};
       me.initialized = true;
    };
-   
+
    var setUrlApiPath = function(obj, provider) {                // 2018-10-12
       if (provider.urlScheme == 'https') {
          var port = (provider.urlPort != "443") ? (":" + provider.urlPort) : "";
@@ -327,11 +327,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       obj.urlUpdateCorpusDocumentJson = urlApiPath + '/updateCorpusDocumentJson.php';
       obj.urlReplaceSingleCorpusDocJson = urlApiPath + '/replaceSingleCorpusDocJson.php';
       obj.urlGetProviderListJson = urlApiPath + '/getProviderListJson.php';
-      
+
       obj.curProvider = JSON.parse(JSON.stringify(provider));    // copy content
       $(".dsw-span-provider").html(provider.title);
    };
-   
+
    var login = function(username, password) {
       //$.ajaxSetup({async:false});
       //var postdata = { dsgUname: username, dsgPword: password };     // camel style: to get dbCorpusDocuments
@@ -373,28 +373,28 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-   
+
    // -------------- object "public" functions ---------
    me.addExtraApiFunctions = function(func) {        // e.g., add extra/docusky.dbRefdataAPI.js
       if (typeof func === 'function') func(me);
       else alert("Argument of addExtraFunctions() must be a function");
    };
-   
+
    me.setLoginAction = function(loginInvokeFun, loginInvokeFunParameters) {
       me.loginInvokeFun = loginInvokeFun;
       me.loginInvokeFunParameters = loginInvokeFunParameters;
    }
-   
+
    var displayDbCorpusList = function(param, evt) {          // list all db/corpus pairs (not the corpuses under a given db)
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       $("#" + loginContainerId).hide();
-      
+
       // show loading icon
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
       $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});
       $("#" + workingProgressId).html("connecting");
-      
+
       var dbCorpusListContentId = me.idPrefix + "dbCorpusListContent" + me.uniqueId;
       var dbCorpusListContainerOverlayId = me.idPrefix + "dbCorpusListContainerOverlay" + me.uniqueId;
       var dbCorpusListContainerId = me.idPrefix + "dbCorpusListContainer" + me.uniqueId;
@@ -402,9 +402,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var target = param.target;
       var titleId = dbCorpusListContainerId + "_Title";
       $("#" + titleId).html(target + " corpus list");     // 2018-10-02, 2018-10-13
-      
+
       var invokeFunName = param.invokeFunName;
-      
+
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.get(me.urlGetDbCorpusListJson + '?target=' + target, function(data) {
@@ -431,7 +431,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   + "</td></tr>";
             }
             if (me.showPublicDbLink) {               // 2018-09-30
-               s += (target == 'OPEN') 
+               s += (target == 'OPEN')
                   ? "<tr><td colspan='3' align='center'><span class='dsw-listPersonalCorpuses'>Show Personal Databases</span></td></tr>"
                   : "<tr><td colspan='3' align='center'><span class='dsw-listOpenCorpuses'>Show Public Databases</span></td></tr>";
             }
@@ -448,13 +448,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             // 2018-09-30: needs to place event hander for switching open/personal corpuses
             $("span.dsw-listOpenCorpuses").unbind("click").click(function(e) {
                var param = { target: 'OPEN',
-                             invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'}; 
+                             invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
                displayDbCorpusList(param, e);
             });
 
             $("span.dsw-listPersonalCorpuses").unbind("click").click(function(e) {
                var param = { target: 'USER',
-                             invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'}; 
+                             invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
                displayDbCorpusList(param, e);
             });
 
@@ -469,7 +469,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                var fieldsOnly = me.utility.getUrlParameterVarValue(url, 'fieldsOnly');    // 2018-09-15
 			      // 2016-08-30(pykenny) remove argument "message"
                //me.getDbCorpusDocumentsGivenPageAndSize(target, db, corpus, page, pageSize, me.callerEvent, me.callerCallback);    // me.callerCallback 負責將載入的內容顯示出來
-               
+
                // 2017-01-17: 先前沒規劃好，讓函式具有相同的參數結構，現在只好用 switch 個別檢查...
                //             否則，若能用 callback.apply()，程式就會漂亮許多..
                //             例如：callback.apply(me, [target, db, corpus, page, pageSize, me.callerEvent, me.callerCallback]);    // me.callerCallback 負責將載入的內容顯示出來
@@ -484,7 +484,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                case 'getDbCorpusDocumentsGivenPageAndSize':
                   // me.callerCallback 負責將載入的內容顯示出來
                   // 2017-07-22: 注意，傳入當前的 event e，而非 me.callerEvent
-                  //me.getDbCorpusDocumentsGivenPageAndSize(target, db, corpus, page, pageSize, e, me.callerCallback, null);    
+                  //me.getDbCorpusDocumentsGivenPageAndSize(target, db, corpus, page, pageSize, e, me.callerCallback, null);
                   me.getQueryResultDocuments(param, e, me.callerCallback);     // 2018-09-15
                   break;
                case 'getQueryPostClassification':
@@ -498,7 +498,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   console.log("Unsupported function: " + invokeFunName);
                }
             });
-			
+
             $("#" + dbCorpusListContainerOverlayId).show();
             // 2016-05-24: 必須在顯示之後，才能取得 render 之後的 height...
             //             To get an accurate value, ensure the element is visible before using .height()
@@ -537,7 +537,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var providerListContainerId = me.idPrefix + "providerListContainer" + me.uniqueId;
       var providerListContainerOverlayId = me.idPrefix + "providerListContainerOverlay" + me.uniqueId;
       var providerListContentId = me.idPrefix + "providerListContent" + me.uniqueId;
-      
+
       var providers = me.providerList;
       // TODO: show content...
       var contentTableId = me.idPrefix + "providerContentTable" + me.uniqueId;
@@ -556,7 +556,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
       s += "</table>";
       $("#" + providerListContentId).html(s);
-      
+
       $(".dsw-a-switchProvider").click(function() {
          var title = $(this).attr("x-title");
          me.providerList.forEach(function(provider, idx) {
@@ -567,7 +567,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          });
          $("#" + providerListContainerId).hide();
       });
-      
+
       $("#" + providerListContainerId).css({top:0, left:0, position:'absolute'});    // needs to reset position first? (or, the position will move if clicking several times?)
       $("#" + providerListContainerOverlayId).show();
       let jelement = $("#" + providerListContainerId);
@@ -581,7 +581,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //jelement.css({top: evt.pageX, left: evt.pageY, position:'absolute'});
 		$("#" + providerListContainerOverlayId).hide();
    };
-   
+
    me.getDbCorpusDocuments = function(target, db, corpus, evt, successFunc) {
       var param = { 'target': target,
                     'db': db,
@@ -591,13 +591,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                     'pageSize': me.pageSize };
       me.getQueryResultDocuments(param, evt, successFunc);
    };
-   
+
    // 2016-08-19: pykenny adds "message" to the parameter list
    // 2016-08-30(pykenny): fix problem when argument 'message' is not given
    // note: me function does not support "callback parameters" (for backward compatibility)
    me.getDbCorpusDocumentsGivenPageAndSize = function(target, db, corpus, page, pageSize, evt, successFunc, message) {
       me.pageSize = pageSize;
-	  
+
 	   var msg = "";
 	   // reset links got by init(): urlGetDbCorpusListJson.php
       $(".loadDbCorpusDocument").each(function(idx){
@@ -605,13 +605,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          href = href.replace(/page=\d+/,'page='+pageSize);
          $(this).attr('href', href);
       });
-	  
+
 	   if (typeof message === "undefined" || !message){
 		   msg = "page: " + page;
 	   } else {
 		   msg = message.toString();
 	   }
-	  
+
       var param = { 'target': target,
                     'db': db,
                     'corpus': corpus,
@@ -619,10 +619,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                     'page': page,
                     'pageSize': pageSize,
                     'message': msg};
-					
+
       me.getQueryResultDocuments(param, evt, successFunc);
    };
-   
+
    me.hideLoadingIcon = function(bool) {
       me.displayLoadingIcon = (bool === false);
    };
@@ -637,10 +637,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $(".dsw-container").find(".dsw-btn-close").click();	  // 2018-10-13: from TagTerm Stats Tool
       }
    };
-  
+
    me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters) {
       var my = null;
-      
+
       if (typeof(param) !== 'object') param = {};
       var target = ('target' in param) ? param.target : 'USER';
       var db = ('db' in param) ? param.db : '';
@@ -648,7 +648,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var query = ('query' in param) ? param.query : '.all';
       var page = ('page' in param) ? param.page : 1;
       var pageSize = ('pageSize' in param) ? param.pageSize : 200;
-      var message = ('message' in param) ? param.message : ('page: ' + page); 
+      var message = ('message' in param) ? param.message : ('page: ' + page);
       var channelKey = ('channelKey' in param) ? param.channelKey: '';       // 2017-01-17
       var fieldsOnly = ('fieldsOnly' in param) ? param.fieldsOnly: '';       // 2018-09-15
       //alert(JSON.stringify(param));
@@ -679,7 +679,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var dbCorpusListContentId = me.idPrefix + "dbCorpusListContent" + me.uniqueId;
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      
+
       // If Container is visible, adjust the opacity and block click events (by overlay layer)
 	   if ($("#" + dbCorpusListContainerId).is(":visible")) {
 		   $("#" + dbCorpusListContainerOverlayId).show();
@@ -703,16 +703,16 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          resize: function(evt, ui) {
                     me.uiState[dbCorpusListContainerId] = { size: ui.size };     // ui.size: { width:w, height:h}
                  },
-         minWidth: 480, 
+         minWidth: 480,
          minHeight: 120
       });;
 
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: { withCredentials: true } });
-      var url = me.urlGetQueryResultDocumentsJson + "?target=" + target 
+      var url = me.urlGetQueryResultDocumentsJson + "?target=" + target
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
-              + "&page=" + page + "&pageSize=" + pageSize 
+              + "&page=" + page + "&pageSize=" + pageSize
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : "")    // 2018-09-14
               + (channelKey ? "&channelKey=" + channelKey : "");
       //var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);      // viewport width
@@ -721,16 +721,16 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //var scrollY = window.pageYOffset;
       //var x = evt.clientX;
       //var y = evt.clientY;
-      //$("#" + loadingContainerId).show().css({top:myTop, left:myLeft}); 
-      
+      //$("#" + loadingContainerId).show().css({top:myTop, left:myLeft});
+
       if (me.displayLoadingIcon) {
          $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
          $("#" + workingProgressId).html(message);
       }
       //alert(url);
-	  
+
 	   $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get(url, function(data) {		  
+      $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
             $("#" + dbCorpusListContainerId).fadeOut();
@@ -767,7 +767,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   ch.callerCallback(retChannelKey, ch.callerCallbackParameters);
                }
             }
-            
+
          }
          else if (data.code == 101) {             // requires login
 			   $("#" + dbCorpusListContainerId).fadeOut();
@@ -789,7 +789,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json');
    };
-   
+
    me.getQueryPostClassification = function(param, evt, successFunc, successFuncParameters) {
       if (typeof(param) != 'object') param = {};
       target = ('target' in param) ? param.target : 'USER';
@@ -799,8 +799,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       page = ('page' in param) ? param.page : 1;
       pageSize = ('pageSize' in param) ? param.pageSize : 50;
       fieldsOnly = ('fieldsOnly' in param) ? param.fieldsOnly : '';      // 2018-09-15
-      message = ('message' in param) ? param.message : ('page: ' + page); 
-	  
+      message = ('message' in param) ? param.message : ('page: ' + page);
+
       me.callerEvent = evt;
       me.callerCallback = successFunc;
       me.callerCallbackParameters = successFuncParameters;
@@ -817,7 +817,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var loginContainerOverlayId = me.idPrefix + "loginContainerOverlay" + me.uniqueId;
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      
+
       // If Container is visible, adjust the opacity and block click events (by overlay layer)
 	   if ($("#" + dbCorpusListContainerId).is(":visible")) {
 		   $("#" + dbCorpusListContainerOverlayId).show();
@@ -831,18 +831,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: { withCredentials: true } });
-      var url = me.urlGetQueryPostClassificationJson + "?target=" + target 
+      var url = me.urlGetQueryPostClassificationJson + "?target=" + target
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
 
-      if (me.displayLoadingIcon) {              
+      if (me.displayLoadingIcon) {
          $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI
          $("#" + workingProgressId).html(message);
       }
-	  
+
 	   //alert("=> " + url);
       $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get(url, function(data) {		  
+      $.get(url, function(data) {
          //alert(JSON.stringify(data));
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
@@ -861,7 +861,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
          else if (data.code == 201) {            // requires db and corpus => display db list for user to specify
             var param = { target: target,
-                          invokeFunName: 'getQueryPostClassification'}; 
+                          invokeFunName: 'getQueryPostClassification'};
             displayDbCorpusList(param, me.callerEvent);
          }
          else {
@@ -871,7 +871,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-   
+
    me.getQueryTagAnalysis = function(param, evt, successFunc, successFuncParameters) {
       if (typeof(param) != 'object') param = {};
       target = ('target' in param) ? param.target : 'USER';
@@ -881,8 +881,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       page = ('page' in param) ? param.page : 1;
       pageSize = ('pageSize' in param) ? param.pageSize : 50;
       fieldsOnly = ('fieldsOnly' in param) ? param.fieldsOnly : '';      // 2018-09-15
-      message = ('message' in param) ? param.message : ('page: ' + page); 
-	  
+      message = ('message' in param) ? param.message : ('page: ' + page);
+
       me.callerEvent = evt;
       me.callerCallback = successFunc;
       me.callerCallbackParameters = successFuncParameters;
@@ -899,7 +899,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var loginContainerOverlayId = me.idPrefix + "loginContainerOverlay" + me.uniqueId;
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      
+
       // If Container is visible, adjust the opacity and block click events (by overlay layer)
 	   if ($("#" + dbCorpusListContainerId).is(":visible")) {
 		   $("#" + dbCorpusListContainerOverlayId).show();
@@ -913,18 +913,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: { withCredentials: true } });
-      var url = me.urlGetQueryTagAnalysisJson + "?target=" + target 
+      var url = me.urlGetQueryTagAnalysisJson + "?target=" + target
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
-      
-      if (me.displayLoadingIcon) {              
+
+      if (me.displayLoadingIcon) {
          $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI
          $("#" + workingProgressId).html(message);
       }
-	  
+
 	   //alert(url);
       $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get(url, function(data) {		  
+      $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
             $("#" + dbCorpusListContainerId).fadeOut();
@@ -942,7 +942,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
          else if (data.code == 201) {            // requires db and corpus => display db list for user to specify
             var param = { target: target,
-                          invokeFunName: 'getQueryTagAnalysis'}; 
+                          invokeFunName: 'getQueryTagAnalysis'};
             displayDbCorpusList(param, me.callerEvent);
          }
          else {
@@ -952,21 +952,21 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-   
+
    me.updateDocument = function(db, corpus, docInfo) {
       updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, db, corpus, docInfo);
    };
-   
+
    me.replaceDocument = function(db, corpus, docInfo) {      // 2018-10-15
       updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, db, corpus, docInfo);
    };
-   
+
    var updateOrReplaceDoc = function(actionUrl, db, corpus, docInfo) {
       if (!('docFilename' in docInfo)) {
          alert("Error: requires db, corpus, docFilename to update document content");
          return false;
       }
-      
+
       var fd = new FormData();
       fd.append('db', db);
       fd.append('corpus', corpus);
@@ -998,7 +998,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    };
 
    //// 動態載入 utility functions
-   me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   //me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
    //let pat = "((http[s]?):\/\/([^\/]+)\/((.+)\/)?)(" + me.package + "):";
    //me.scriptPath = new Error().stack.match(pat)[1];
    //alert(me.scriptPath);
@@ -1023,7 +1023,7 @@ var docuskyWidgetUtilityFunctions = {
       }
       return '';
    },
-   
+
    //getScriptPath: function() {
    //   var ua = window.navigator.userAgent;
    //   var msie = ua.indexOf("MSIE ");
@@ -1043,7 +1043,7 @@ var docuskyWidgetUtilityFunctions = {
    //      file: pathParts[6]
    //   };
    //},
-   
+
    basename: function(path) {
       return path.replace(/.*[/]/, "");
    },
@@ -1051,14 +1051,14 @@ var docuskyWidgetUtilityFunctions = {
    dirname: function(path) {
       return path.match(/(.*)[/]/)[1];
    },
-   
+
    uniqueId: (function() {
       var counter = 0;
       return function() {
          return "_" + counter++;
       }
    })(),
-   
+
    getDateStr: function(d, separator) {
       if (typeof separator == "undefined") separator = '';
       var twoDigitsMonth = ("0" + (d.getMonth()+1)).slice(-2);      // slice(-2) to get last 2 chars
@@ -1066,7 +1066,7 @@ var docuskyWidgetUtilityFunctions = {
       var strDate = d.getFullYear() + separator + twoDigitsMonth + separator + twoDigitsDay;
       return strDate;
    },
-   
+
    //copyArray: function(o) {
    //   var output, v, key;
    //   output = Array.isArray(o) ? [] : {};
@@ -1083,7 +1083,7 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
-   
+
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
@@ -1092,7 +1092,7 @@ var docuskyWidgetUtilityFunctions = {
       script.defer = true;        // script will not run until after the page has loaded
       document.getElementsByTagName('head').item(0).appendChild(script);
    }
- 
+
 };
 
 // 20170302, 20180319: CSS injection
@@ -1157,4 +1157,3 @@ $('head').append('<style id="dsw-simplecomboui">'
 // ----------------------------------------------------------------------------------
 // initialize widget
 var docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
-
