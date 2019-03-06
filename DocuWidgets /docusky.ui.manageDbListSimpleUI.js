@@ -275,6 +275,16 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    }
 
    var displayDbList = function(evt, succFunc) {
+      //2019-03-08 inset username on dbListContainerId
+      //Owning to the init() limit, it is needed to insert username here.
+      if(!me.username){
+        me.getUserProfile(null,function(data){
+          me.username = data.display_name;
+          var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
+          $("#"+spanUsernameId).html(me.username);
+        });
+      }
+
       var dbList = me.dbList;
       //alert(JSON.stringify(dbList, null, '\t'));
 
@@ -466,6 +476,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          if (data.code == 0) {          // successfully invoke rename api (but may not update record successfully)
             if (typeof succFunc === "function") succFunc(data.message);
             else alert("USER PROFILE:\n" + JSON.stringify(data.message));
+
          }
          else if (data.code == 101) {             // requires login
             var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
