@@ -49,7 +49,6 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.urlLogin = null;
    me.urlLogout = null;
    me.username = '';
-   me.loginCallback = null;               // 儲存當前欲執行的函式（成功登入後將自動呼叫）
    me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
@@ -463,7 +462,6 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
       me.callerEvent = evt;
       me.callerCallback = succFunc;
-      me.loginCallback = me.displayDbList;
       me.enableRefresh = true;
 
       // 決定顯示的位置
