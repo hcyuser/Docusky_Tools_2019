@@ -384,8 +384,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          var match = this.href.match(/db=([^&]+)/);
          var confirmed = confirm("確定要刪除資料庫：「" + decodeURIComponent(match[1] + '」?'));
          if (!confirmed) return;      // cancel
+         me.deleteDb(match[1]);
 
-         $.ajaxSetup({xhrFields: {withCredentials: true}});
+         /*$.ajaxSetup({xhrFields: {withCredentials: true}});
          $.get(this.href, function(jsonObj) {
             var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
             //me.utility.displayJson(jsonObj);
@@ -398,7 +399,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                $("#" + dbListContainerId).fadeout();
                alert(jsonObj.code + ': ' + jsonObj.message);
             }
-         }, 'json');
+         }, 'json');*/
       });
 
       // 2016-11-19
@@ -406,6 +407,31 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          me.timeoutFunId = setTimeout(function() { me.manageDbList(evt, null); }, 15000);      // 15 seconds
       }
    };
+
+   //2019-03-06 : public function
+   me.deleteDb = function(DbTitle,succFunc,failFunc) {
+     if (!me.initialized) init();
+     var url = me.urlDeleteDbJson + '?db=' + DbTitle;
+     $.ajaxSetup({xhrFields: {withCredentials: true}});
+     $.get(url, function(data) {
+        if (data.code == 0) {          // successfully invoke delete api
+           if (typeof succFunc === "function") succFunc();
+           else alert(data.message);
+        }
+        else if (data.code == 101) {             // requires login
+          $("#" + loginContainerId).show();
+          var jelement = $("#" + loginContainerId);
+          var w = jelement.width();
+          var h = jelement.height();
+          jelement.css({ top: '40px', left: '80px' });
+          jelement.show();
+        }
+        else {                        // fail to invoke delete api
+          if (typeof succFunc === "function") failFunc();
+          else alert("Error: " + data.code + "\n" + data.message);
+        }
+     }, 'json');
+   }
 
    // 2019-02-17: public function
    me.renameDbTitle = function(oldDbTitle, newDbTitle, succFunc) {
