@@ -275,15 +275,6 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    }
 
    var displayDbList = function(evt, succFunc) {
-      //2019-03-08 inset username on dbListContainerId
-      //Owning to the init() limit, it is needed to insert username here.
-      if(!me.username){
-        me.getUserProfile(null,function(data){
-          me.username = data.display_name;
-          var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
-          $("#"+spanUsernameId).html(me.username);
-        });
-      }
 
       var dbList = me.dbList;
       //alert(JSON.stringify(dbList, null, '\t'));
@@ -531,6 +522,16 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
               jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
               $("#" + dbListContainerId).show();
 
+            }
+
+            //2019-03-08 inset username on dbListContainerId
+            //Owning to the init() limit, it is needed to insert username here.
+            if(!me.username){
+              me.getUserProfile(null,function(data){
+                me.username = data.display_name;
+                var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
+                $("#"+spanUsernameId).html(me.username);
+              });
             }
 
             // 2017-07-22
