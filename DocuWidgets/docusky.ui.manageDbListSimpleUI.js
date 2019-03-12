@@ -484,7 +484,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       }, 'json');
    }
 
-   me.manageDbList = function(evt, succFunc) {
+   me.manageDbList = function(evt, succFunc, failFunc) {
       //if (!me) { var me = this; }
       if (!me.initialized) init();
 
@@ -505,6 +505,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.get(me.urlGetDbListJson, function(data) {
+
+         if(evt){
+           let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+           $("#"+loadingContainerId).hide();
+         }
+
          if (data.code == 0) {          // successfully get db list
 
             me.dbList = data.message;
@@ -528,7 +534,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             //Owning to the init() limit, it is needed to insert username here.
             if(!me.username){
               me.getUserProfile(null,function(data){
-                me.username = data.display_name;
+                me.username = data.username;
                 var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
                 $("#"+spanUsernameId).html(me.username);
               });
@@ -544,23 +550,48 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             }
          }
          else if (data.code == 101) {             // requires login
-            $("#" + loginContainerId).show();
-            var jelement = $("#" + loginContainerId);
-            var w = jelement.width();
-            var h = jelement.height();
-            var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
-            var posLeft = Math.max(10, evt.pageX - overX - 40);
-            var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
-            //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
-            var posTop = evt.pageY + 5;
-            jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
-            jelement.show();
+
+           $("#" + loginContainerId).show();
+           var jelement = $("#" + loginContainerId);
+           var w = jelement.width();
+           var h = jelement.height();
+           var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
+           var posLeft = Math.max(10, evt.pageX - overX - 40);
+           var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
+           //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
+           var posTop = evt.pageY + 5;
+           jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
+           jelement.show();
+
+
          }
          else {
             alert("Error: " + data.code + "\n" + data.message);
          }
-      }, 'json');
-      //$.ajaxSetup({async:true});
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+         console.warn('woops'); //throw exception later
+         if(evt){
+           let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+           $("#"+loadingContainerId).show();
+           let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
+           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+         }
+         if (typeof failFunc === "function") {
+            me.hideWidget(me.displayWidget);
+            failFunc();
+         }
+         else{
+          let retry = function(){
+            //$.ajaxSetup({xhrFields: {withCredentials: true}});
+            //$.ajax(this); //occur CORS
+            me.manageDbList(evt, succFunc);
+          }
+          setTimeout(retry,3000);
+         }
+
+      });
+
    };
 
 
