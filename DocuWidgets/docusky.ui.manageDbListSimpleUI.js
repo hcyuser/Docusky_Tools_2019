@@ -75,6 +75,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.validEvtKeys = ['dbClick', 'corpusAttCntClick', 'corpusClick', 'attCntClick'];
    me.loginSuccFunc = null;                // 2019-02-19
    me.loginFailFunc = null;
+   me.Error = null; //all scope error handle
 
    // =================================
    //       main functions
@@ -235,14 +236,41 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
            else me.manageDbList(me.callerEvent, me.callerCallback);
          }
          else {
-            if (typeof failFunc === 'function') failFunc(jsonObj);
+            console.error("Login error");
+            if (typeof failFunc === 'function'){
+              failFunc(jsonObj);
+            }
+            else if(typeof me.Error === "function"){
+              me.Error("Login error");
+            }
             else {
                $("#" + loginContainerId).show();
                $("#" + loginMessageId).html(jsonObj.code + ': ' + jsonObj.message);    // jsonObj.code == 101 ==> Requires login
             }
          }
-      }, 'json');
-      //$.ajaxSetup({async:true});
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+         console.error("Connection error");
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+            me.Error("Connection error");
+         }
+         else{
+          let loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
+          let loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
+          $("#" + loginContainerId).show();
+          $("#" + loginMessageId).html("Connection error");
+          let retry = function(){
+            //$.ajaxSetup({xhrFields: {withCredentials: true}});
+            //$.ajax(this); //occur CORS
+            me.login(username, password, succFunc, failFunc);
+          }
+          setTimeout(retry,3000);
+         }
+
+      });
    };
 
    me.hideWidget = function(bool) {
@@ -428,14 +456,40 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
           jelement.show();
         }
         else {                        // fail to invoke delete api
-          if (typeof succFunc === "function") failFunc();
-          else alert("Error: " + data.code + "\n" + data.message);
+          if (typeof failFunc === "function"){
+            failFunc();
+          }
+          else if(typeof me.Error === "function"){
+            me.Error("Server error");
+          }
+          else {
+            alert("Error: " + data.code + "\n" + data.message);
+          }
         }
-     }, 'json');
+     }, 'json')
+     .fail(function (jqXHR, textStatus, errorThrown){
+        console.error("Connection error");
+        if (typeof failFunc === "function") {
+           failFunc();
+        }
+        else if(typeof me.Error === "function"){
+           me.Error("Connection error");
+        }
+        else{
+         alert("Connection error");
+         let retry = function(){
+           //$.ajaxSetup({xhrFields: {withCredentials: true}});
+           //$.ajax(this); //occur CORS
+           me.deleteDb(DbTitle,succFunc,failFunc);
+         }
+         setTimeout(retry,3000);
+        }
+
+     });
    }
 
    // 2019-02-17: public function
-   me.renameDbTitle = function(oldDbTitle, newDbTitle, succFunc) {
+   me.renameDbTitle = function(oldDbTitle, newDbTitle, succFunc, failFunc) {
       if (!me.initialized) init();
       var url = me.urlRenameDbTitleJson + '?oldDbTitle=' + oldDbTitle + '&newDbTitle=' + newDbTitle;
       $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -453,9 +507,36 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             jelement.show();
          }
          else {
-            alert("Error: " + data.code + "\n" + data.message);
+           if (typeof failFunc === "function"){
+             failFunc();
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server error");
+           }
+           else {
+             alert("Error: " + data.code + "\n" + data.message);
+           }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+         console.error("Connection error");
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+            me.Error("Connection error");
+         }
+         else{
+          alert("Connection error");
+          let retry = function(){
+            //$.ajaxSetup({xhrFields: {withCredentials: true}});
+            //$.ajax(this); //occur CORS
+            me.renameDbTitle(oldDbTitle, newDbTitle, succFunc, failFunc);
+          }
+          setTimeout(retry,3000);
+         }
+
+      });
    }
 
    // 2019-02-19
@@ -551,26 +632,52 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
          else if (data.code == 101) {             // requires login
 
-           $("#" + loginContainerId).show();
-           var jelement = $("#" + loginContainerId);
-           var w = jelement.width();
-           var h = jelement.height();
-           var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
-           var posLeft = Math.max(10, evt.pageX - overX - 40);
-           var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
-           //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
-           var posTop = evt.pageY + 5;
-           jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
-           jelement.show();
+           if(evt){
+             $("#" + loginContainerId).show();
+             var jelement = $("#" + loginContainerId);
+             var w = jelement.width();
+             var h = jelement.height();
+             var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
+             var posLeft = Math.max(10, evt.pageX - overX - 40);
+             var overY = Math.max(0, evt.pageY + h + 15 - winHeight);    // 超過下方邊界多少 pixels
+             //var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
+             var posTop = evt.pageY + 5;
+             jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
+             jelement.show();
 
+           }
+           else{
+             $("#" + loginContainerId).show();
+             var jelement = $("#" + loginContainerId);
+             var w = jelement.width();
+             var h = jelement.height();
+             var overX = Math.max(0, w - 40 - winWidth);     // 超過右側邊界多少 pixels
+             var posLeft = Math.max(10, overX - 40);
+             var overY = Math.max(0, h + 15 - winHeight);    // 超過下方邊界多少 pixels
+             var posTop = 5;
+             jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
+             jelement.show();
+
+           }
 
          }
          else {
-            alert("Error: " + data.code + "\n" + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function") {
+                me.hideWidget(me.displayWidget);
+                failFunc();
+             }
+             else if(typeof me.Error === "function"){
+                me.hideWidget(me.displayWidget);
+                me.Error("Server Error");
+             }
+             else{
+               alert("Error: " + data.code + "\n" + data.message);
+             }
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.warn('woops'); //throw exception later
+         console.error("Connection error");
          if(evt){
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
            $("#"+loadingContainerId).show();
@@ -581,11 +688,16 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             me.hideWidget(me.displayWidget);
             failFunc();
          }
+         else if(typeof me.Error === "function"){
+            me.hideWidget(me.displayWidget);
+            me.Error("Connection error");
+         }
          else{
+
           let retry = function(){
             //$.ajaxSetup({xhrFields: {withCredentials: true}});
             //$.ajax(this); //occur CORS
-            me.manageDbList(evt, succFunc);
+            me.manageDbList(evt, succFunc, failFunc);
           }
           setTimeout(retry,3000);
          }
