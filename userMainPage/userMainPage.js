@@ -333,6 +333,21 @@ function renameDB(){
   GetCorpus();
 }
 
+function Logout(){
+  var URL = "https://docusky.org.tw/DocuSky/webApi/userLogoutJson.php";
+  $.ajax({
+     type: 'GET',
+     url: URL,
+     dataType: 'json',
+     success: function (data) {
+        console.log("成功登出");
+     },
+     error: function(response){
+          console.log(response.responseText);
+        }
+  });
+}
+
 /*------------------download DocuXml-------------------*/
 var downloadDocuXml = function (dbname) {
     var documents = {};
