@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <script src="./userMainPage.js"></script>
     <style>
+      body{
+        font-family: Tahoma, "儷黑 Pro", "LiHei Pro", 微軟正黑體, "Microsoft JhengHei", 標楷體, DFKai-SB, Simsun;
+      }
       #TOPBTN {
         position: fixed;
         bottom: 20px;
@@ -122,7 +125,7 @@
     <div class="small-12 columns">
         <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
             <li><span class="user">個人資料庫</span></li>
-            <li><a href="ds-01.home.html">返回首頁</a></li>
+            <li><a href="ds-01.home.html" target="_blank">返回首頁</a></li>
             <li><a href="#" data-toggle="modal" data-target="#researchTools">研究平台</a>
             <li><a href="accounts/changePassword2.php">修改密碼</a></li>
             <li><a href="https://docusky.org.tw/DocuSky/userLogout.php" onclick="Logout()" >登出系統</a></li>
@@ -137,8 +140,16 @@
       <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
         <br>
         <div class="col-md-3">
-          <h4><i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;">📌</i></h4>
+          <h4>
+            <i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;" title="allows scolling left-panel">📌</i>
+          </h4>
+          <h3>
+            <a href="./manual.pdf" ><i class="fas fa-book-medical" title="manual"></i></a>
+          </h3>
+
         </div>
+
+
         <br>
         <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
         <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理 <i class="fas fa-sync-alt"></i></button>
@@ -304,9 +315,9 @@
   </div>
 </div>
 <div>
-  <button onclick="goToTop()" id="TOPBTN"><h5><i class="fas fa-angle-up"></i></h5></button>
-  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel"><h5><i class="fas fa-columns"></i></h5></button>
-  <button onclick="hideUploadTool()" id="HideUploadTool"><h5><i class="fas fa-toolbox"></i></h5></button>
+  <button onclick="goToTop()" id="TOPBTN" title="go to top"><h5><i class="fas fa-angle-up"></i></h5></button>
+  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel" title="show/hide left panel"><h5><i class="fas fa-columns"></i></h5></button>
+  <button onclick="hideUploadTool()" id="HideUploadTool" title="show/hide upload area"><h5><i class="fas fa-toolbox"></i></h5></button>
 </div>
 </body>
 </html>
