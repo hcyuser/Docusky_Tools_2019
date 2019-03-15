@@ -762,8 +762,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
    // 2017-08-09: open uploadMultipart() method
-   me.uploadMultipart = function(url, data, callback) {       // 2017-04-23: add callback
-      var mul = buildMultipart(data);
+   me.uploadMultipart = function(data, succFunc, failFunc) {       // 2017-04-23: add callback
+      // Big issue: Change from me.uploadMultipart = function(url, data, callback) to me.uploadMultipart = function(data, succFunc, failFunc)
+      // It's needed to judge the parameter first.
+      var realData = data;
+      var realsuccFunc = succFunc;
+      var realfailFunc = failFunc;
+      if(data==me.urlUploadXmlFilesToBuildDbJson){
+        realData = succFunc;
+        realsuccFunc = failFunc;
+        realfailFunc = null;
+      }
+      var mul = buildMultipart(realData);
       $.ajax({
          url: me.urlUploadXmlFilesToBuildDbJson,
          data: mul.data,
@@ -801,7 +811,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
             $("#" + loadingContainerId).hide();
             if (data.code == 0) {                      // successfully get db list
-               if (typeof callback === 'function') callback(data);
+               if (typeof realsuccFunc === 'function') realsuccFunc(data);
                else {
                   alert(data.message);
                   me.manageDbList(me.callerEvent, null);  // me.callerCallback? refresh db_corpus list

@@ -284,6 +284,10 @@ function renameJson(){
 }
 
 function deleteJson(catgory, datapath, filename){
+  let r = confirm("確定要刪除嗎？");
+  if(r!=true){
+      return;
+  }
   let transporter = docuskyJson.jsonTransporter;
   transporter.deleteDataFile(catgory, datapath, filename, null);
   alert("刪除成功");
@@ -308,6 +312,10 @@ function retrieveJsonCallback(){
 }
 
 function deleteXML(DB){
+  let r = confirm("確定要刪除嗎？");
+  if(r!=true){
+      return;
+  }
   var URL = "https://docusky.org.tw/DocuSky/webApi/deleteDbJson.php?db="+DB;
   $.ajax({
      type: 'GET',
