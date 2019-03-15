@@ -540,11 +540,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    }
 
    // 2019-02-19
-   me.getUserProfile = function(evt, succFunc) {
+   me.getUserProfile = function(evt, succFunc, failFunc) {
       if (!me.initialized) init();
+
       var url = me.urlGetUserProfileJson;
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.get(url, function(data) {
+
+          if(evt){
+            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+            $("#"+loadingContainerId).hide();
+          }
+
          if (data.code == 0) {          // successfully invoke rename api (but may not update record successfully)
             if (typeof succFunc === "function") succFunc(data.message);
             else alert("USER PROFILE:\n" + JSON.stringify(data.message));
@@ -560,9 +567,39 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             jelement.show();
          }
          else {
-            alert("Error: " + data.code + "\n" + data.message);
+           if (typeof failFunc === "function"){
+             failFunc();
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server error");
+           }
+           else {
+             alert("Error: " + data.code + "\n" + data.message);
+           }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+         console.error("Connection error");
+         if(evt){
+           let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+           $("#"+loadingContainerId).show();
+           let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
+           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+         }
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+            me.Error("Connection error");
+         }
+         else{
+          let retry = function(){
+            me.getUserProfile(evt, succFunc, failFunc);
+          }
+          setTimeout(retry,3000);
+         }
+
+      });
    }
 
    me.manageDbList = function(evt, succFunc, failFunc) {
