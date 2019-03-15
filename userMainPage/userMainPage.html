@@ -23,7 +23,7 @@
       #TOPBTN {
         position: fixed;
         bottom: 20px;
-        left: 20px;
+        left: 165px;
         z-index: 99;
         font-size: 18px;
         border: none;
@@ -37,7 +37,7 @@
       #HideLeftControlPanel{
         position: fixed;
         bottom: 20px;
-        left: 40px;
+        left: 185px;
         z-index: 99;
         font-size: 18px;
         border: none;
@@ -51,7 +51,7 @@
       #HideUploadTool {
         position: fixed;
         bottom: 20px;
-        left: 70px;
+        left: 215px;
         z-index: 99;
         font-size: 12px;
         border: none;
@@ -108,9 +108,9 @@
         <div class="tools">
             <ul>
                 <li id="nav01"><a href="ds-03.tags.html"><div class="hidden">標記與編輯</div></a></li>
-                <li id="nav02"><a href="ds-04.convertFormat.html"><div class="hidden">轉換文本格式</a></div></li>
-                <li id="nav03"><a href="ds-05.constructDatabase.html"><div class="hidden">建庫與重整</a></div></li>
-                <li id="nav04"><a href="#" class="selected"><div class="hidden">個人資料庫</a></div></li>
+                <li id="nav02"><a href="ds-04.convertFormat.html"><div class="hidden">轉換文本格式</div></a></li>
+                <li id="nav03"><a href="ds-05.constructDatabase.html"><div class="hidden">建庫與重整</div></a></li>
+                <li id="nav04"><a href="#" class="selected"><div class="hidden">個人資料庫</div></a></li>
                 <li id="nav05"><a href="ds-06.textAnalyticsTools.html"><div class="hidden">探勘與分析</div></a></li>
                 <li id="nav06"><a href="ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
                 <li id="nav07"><a href="ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
@@ -118,20 +118,20 @@
         </div>
     </div>
 </header>
-<div class="row expanded navigation text-right mr-0">
+<div class="row expanded navigation text-right mr-0 pb-2">
     <div class="small-12 columns">
         <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
             <li><span class="user">個人資料庫</span></li>
-            <li><a href="ds-01.home.html">回首頁</a></li>
+            <li><a href="ds-01.home.html">返回首頁</a></li>
             <li><a href="#" data-toggle="modal" data-target="#researchTools">研究平台</a>
             <li><a href="accounts/changePassword2.php">修改密碼</a></li>
-            <li><a href="https://docusky.org.tw/DocuSky/userLogout.php" onclick="Logout()" >登出</a></li>
+            <li><a href="https://docusky.org.tw/DocuSky/userLogout.php" onclick="Logout()" >登出系統</a></li>
         </ul>
     </div>
 </div>
 
 <div class="container-fluid">
-  <div class="row">
+  <div class="row mx-auto">
     <div class="col-md-3 text-center" id="LeftControlPanel">
       <br>
       <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
@@ -140,39 +140,31 @@
           <h4><i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;">📌</i></h4>
         </div>
         <br>
-        <button type="button" class="btn btn-info btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
+        <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
         <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理 <i class="fas fa-sync-alt"></i></button>
       </div>
     </div>
-    <div class="col text-center"id="DocManage">
-      <br>
-      <div id="DocManageUploadTool" class="border UploadTool">
-        <div class="text-right ml-4">
-          <div class="label label-default" onclick="hideUploadTool()">
-            <h6>
-              X隱藏
-            </h6>
-          </div>
-        </div>
-        <h3>新增文獻集</h3>
-          <form>
-            <div class="form-group form-inline ml-4">
-              <div class='form-row'>
-                <span class="form-control-plaintext pr-2" style="width:auto">
-                  資料庫名稱：
-                </span>
-                <input type="text" class='form-control' style='width: auto' id="UploadDBName" value="Default">
-              </div>
-              <div class="row">
-                <label class="control-label col-12 pl-0 ml-2" style="justify-content:left" for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
-                <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
-                <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
-              </div>
+    <div class="col text-center" id="DocManage">
+      <div id="DocManageUploadTool" class="border UploadTool mt-4 pb-3">
+        <h6 style="float:right" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
+        <h3 class='mx-auto py-3'>新增文獻集</h3>
+          <form class='mx-4'>
+            <div class='form-row'>
+              <span class="form-control-plaintext pr-2" style="width:auto">
+                資料庫名稱：
+              </span>
+              <input type="text" class='form-control' style='width: auto' id="UploadDBName" placeholder="Default">
+            </div>
+            <div class='form-row'>
+              <label class="control-label" style="text-align:left" for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
+              <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
+            </div>
+            <div class='form-row justify-content-center'>
+              <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
             </div>
           </form>
       </div>
-      <div>
-        <br>
+      <div class='pb-2 pt-3'>
         <h3>文獻集列表</h3>
         <table id="DocManageTable" class="table table-striped table-bordered" style="width:100%">
             <thead>
@@ -193,14 +185,9 @@
     <div class="col text-center" id="JsonManage">
       <br>
       <div id="JsonManageUploadTool" class="m-2 border UploadTool">
-        <div class="text-right ml-4">
-          <div class="label label-default" onclick="hideUploadTool()">
-            <h6>
-              X隱藏
-            </h6>
-          </div>
-        </div>
-        <h3>新增Json資料</h3>
+        <h6 style="float: right" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
+        <h6 style="float: left; visibility: hidden" class="label label-default">X 隱藏<!--為了讓新增JSON能真的置中--></h6>
+        <h3 class='mx-auto'>新增Json資料</h3>
         <form>
           <div class="form-group form-inline">
             <div class="form-row  ml-4">

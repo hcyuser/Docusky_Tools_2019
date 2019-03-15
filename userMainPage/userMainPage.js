@@ -112,8 +112,8 @@ function  PrintDocManageTable(AllCorpus){
 
     TablePrefix += `<tr><td>` + DB + `</td><td>`
                 + webpage_search + `</td><td>`
-                + status[DBStatus[ DB ]] + `</td><td>`
-                + DBTime[DB] + `</td>`;
+                + status[DBStatus[ DB ]] + `</td><td><p>`
+                + DBTime[DB].split(" ").join("<br>") + `</p></td>`;
 
     TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXml("`+DB+`")'>下載</button></td></tr>`;
   }
@@ -122,7 +122,8 @@ function  PrintDocManageTable(AllCorpus){
   $('#DocManageTable').DataTable({
       paging:true,
       searching:true,
-      info:true
+      info:true,
+      columnDefs: [{targets: -1,className: 'dt-body-center'}]
    });
 
 }
@@ -168,7 +169,7 @@ function PrintJsonData(JsonData){
 
       });
 
-     TablePrefix += `<tr><td>` + catgory + `</td><td>` + multipath + `</td><td>` + item[item.length-1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>下載</button></td></tr>`;
+     TablePrefix += `<tr><td>` + catgory + `</td><td>` + multipath.split("/").join("/<br>") + `</td><td>` + item[item.length-1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>更名</button>  <button type="button" onclick='deleteJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>下載</button></td></tr>`;
     });
 
   }
@@ -177,7 +178,8 @@ function PrintJsonData(JsonData){
   $('#JsonManageTable').DataTable({
       paging:true,
       searching:true,
-      info:true
+      info:true,
+      columnDefs: [{targets: -1,className: 'dt-body-center'}]
    });
 
 }
