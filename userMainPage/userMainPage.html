@@ -121,7 +121,7 @@
         </div>
     </div>
 </header>
-<div class="row expanded navigation text-right mr-0 pb-2">
+<div class="row expanded navigation text-right mr-0 py-2">
     <div class="small-12 columns">
         <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
             <li><span class="user">個人資料庫</span></li>
@@ -135,26 +135,19 @@
 
 <div class="container-fluid">
   <div class="row mx-auto">
-    <div class="col-md-3 text-center" id="LeftControlPanel">
+    <div class="col-md-3 col-xl-2 text-center" id="LeftControlPanel">
       <br>
       <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
-        <br>
-        <div class="col-md-3">
+        <div>
+          <br>
           <span class="form-control-plaintext" style="width:auto">
-            <h4>
-              <i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;" title="allows scolling left-panel">📌</i>
-            </h4>
-            <h3>
-              <a href="./manual.pdf" ><i class="fas fa-book-medical" title="manual"></i></a>
-            </h3>
+            <i class="h4" onclick="pinLeftControlBTM($(this));" style="background-color: darkred;" title="allows scolling left-panel">📌</i>
+            <a href="./manual.pdf"><i title="manual" class=" mx-2 h3 fas fa-book-medical"></i></a>
           </span>
-
+          <br>
+          <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
+          <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理 <i class="fas fa-sync-alt"></i></button>
         </div>
-
-
-        <br>
-        <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
-        <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json管理 <i class="fas fa-sync-alt"></i></button>
       </div>
     </div>
     <div class="col text-center" id="DocManage">
