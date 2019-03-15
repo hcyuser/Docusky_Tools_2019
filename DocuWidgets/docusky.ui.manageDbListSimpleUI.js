@@ -765,7 +765,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.uploadMultipart = function(url, data, callback) {       // 2017-04-23: add callback
       var mul = buildMultipart(data);
       $.ajax({
-         url: url,
+         url: me.urlUploadXmlFilesToBuildDbJson,
          data: mul.data,
          processData: false,
          type: "post",

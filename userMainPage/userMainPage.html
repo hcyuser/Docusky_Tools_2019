@@ -140,12 +140,14 @@
       <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
         <br>
         <div class="col-md-3">
-          <h4>
-            <i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;" title="allows scolling left-panel">📌</i>
-          </h4>
-          <h3>
-            <a href="./manual.pdf" ><i class="fas fa-book-medical" title="manual"></i></a>
-          </h3>
+          <span class="form-control-plaintext" style="width:auto">
+            <h4>
+              <i onclick="pinLeftControlBTM($(this));" style="background-color: darkred;" title="allows scolling left-panel">📌</i>
+            </h4>
+            <h3>
+              <a href="./manual.pdf" ><i class="fas fa-book-medical" title="manual"></i></a>
+            </h3>
+          </span>
 
         </div>
 
@@ -166,7 +168,7 @@
               </span>
               <input type="text" class='form-control' style='width: auto' id="UploadDBName" placeholder="Default">
             </div>
-            <div class='form-row'>
+            <div class='form-row form-control-plaintext' style='width: auto'>
               <label class="control-label" style="text-align:left" for="UploadXmlFileId">上載單份 ThdlExportXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
               <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-5">
             </div>
