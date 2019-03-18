@@ -830,6 +830,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
             $("#"+loadingContainerId).hide();
             alert(error);
+            if(error){
+              console.warn(error);
+            }else{
+              alert("Connection Error");
+            }
+
             //ert(xhr.responseText);
          }
       });

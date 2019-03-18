@@ -22,6 +22,16 @@ $(document).ready( function () {
     GetName();
     GetCorpus();
     GetJson();
+
+    let removeWidgetLogin  = function(){
+      if($("#DbList_loginContainer_0").is(':visible')){
+        $('#LoginDialog').modal({backdrop: 'static', keyboard: false});
+        $('#LoginDialog').modal('show');
+        $("#DbList_loginContainer_0").hide();
+      }
+    }
+    setInterval(removeWidgetLogin, 100);
+
 } );
 
 function InitialAfterLogin(data){
@@ -42,7 +52,7 @@ function pinLeftControlBTM(selector){
     selector.removeAttr('style');
   }else{
     selector.parent().parent().parent().attr( 'style', "position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;");
-    selector.attr( 'style','background-color: darkred;');
+    selector.attr( 'style','background-color: orangered; border-radius: 3px;');
   }
 
 }
@@ -221,6 +231,7 @@ var readFile = function(file){
 };
 
 function UploadXMLBTN(event){
+  $("#uploadXmlToBuildDbId").html("上傳中");
   event.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
   var url = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
   formData = [];
@@ -230,9 +241,11 @@ function UploadXMLBTN(event){
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
   //console.log(formData);
-  docuskyDbObj.uploadMultipart(url, formData);
-  GetCorpus();
-
+  docuskyDbObj.uploadMultipart(url, formData,function(data){
+    $("#uploadXmlToBuildDbId").html("開始上傳");
+    alert(data.message);
+    GetCorpus();
+  });
 }
 
 
@@ -248,7 +261,7 @@ function UploadJson(event){
 
 function storeJsonCallback() {
    alert("上傳成功");
-   GetCorpus();
+   GetJson();
 }
 
 function readJsonFile(file){
@@ -289,9 +302,11 @@ function deleteJson(catgory, datapath, filename){
       return;
   }
   let transporter = docuskyJson.jsonTransporter;
-  transporter.deleteDataFile(catgory, datapath, filename, null);
-  alert("刪除成功");
-  GetJson();
+  transporter.deleteDataFile(catgory, datapath, filename, function(){
+    alert("刪除成功");
+    GetJson();
+  });
+
 
 }
 
@@ -338,9 +353,13 @@ function renameDBDialogContent(oldname){
 }
 
 function renameDB(){
-  docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),null);
-  $("#renameDBDialog").modal('hide');
-  GetCorpus();
+  docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),function(){
+    $("#renameDBDialog").modal('hide');
+    alert("命名成功");
+    GetCorpus();
+  });
+
+
 }
 
 function Logout(){
@@ -356,6 +375,21 @@ function Logout(){
           console.log(response.responseText);
         }
   });
+}
+
+function Login(){
+  docuskyDbObj.login($("#DocuSkyUsername").val(),$("#DocuSkyPassword").val(),loginSuccFunc,loginFailFunc);
+
+}
+function loginSuccFunc(){
+  alert("登入成功");
+  location.reload();
+
+}
+
+function loginFailFunc(){
+  alert("帳號或密碼錯誤");
+  $("#DocuSkyPassword").val("");
 }
 
 /*------------------download DocuXml-------------------*/
@@ -388,7 +422,7 @@ var downloadDocuXml = function (dbname) {
             param.page += 1;
             docuSkyObj.getQueryResultDocuments(param, null, getDocList);
         } else {
-
+            $("#LoadingDialog").modal('hide');
             let exporter = new DocuSkyExporter();
             let xmlString = exporter.generateDocuXml(documents, param.db);
             let blob = new Blob([xmlString]);
@@ -397,8 +431,10 @@ var downloadDocuXml = function (dbname) {
         }
     };
 
-    docuSkyObj.hideLoadingIcon(false);
+    docuSkyObj.hideLoadingIcon(true);
     alert("下載中，請稍候");
+    $('#LoadingDialog').modal({backdrop: 'static', keyboard: false});
+    $("#LoadingDialog").modal('show');
     docuSkyObj.getQueryResultDocuments(param, null, getDocList);
 
 };
