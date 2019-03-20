@@ -456,6 +456,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
           jelement.show();
         }
         else {                        // fail to invoke delete api
+          console.error("Server error");
           if (typeof failFunc === "function"){
             failFunc();
           }
@@ -507,6 +508,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             jelement.show();
          }
          else {
+           console.error("Server error");
            if (typeof failFunc === "function"){
              failFunc();
            }
@@ -567,6 +569,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             jelement.show();
          }
          else {
+           console.error("Server Error");
            if (typeof failFunc === "function"){
              failFunc();
            }
@@ -716,7 +719,14 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       .fail(function (jqXHR, textStatus, errorThrown){
          console.error("Connection error");
          if(evt){
+
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+           let w = $("#"+loadingContainerId).width();
+           let h = $("#"+loadingContainerId).height();
+           let overX = Math.max(0, evt.pageX - 40 + w - winWidth);     
+           let posLeft = Math.max(10, evt.pageX - overX - 40);
+           var posTop = evt.pageY + 5;
+           $("#"+loadingContainerId).css({ top: posTop + 'px', left: posLeft + 'px' });
            $("#"+loadingContainerId).show();
            let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
            $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
@@ -773,6 +783,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
         realsuccFunc = failFunc;
         realfailFunc = null;
       }
+
+      let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
+      $("#" + workingProgressId).html("");
+
       var mul = buildMultipart(realData);
       $.ajax({
          url: me.urlUploadXmlFilesToBuildDbJson,
@@ -818,7 +832,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                }
             }
             else {
-               alert("Error: " + data.code + "\n" + data.message);
+
+               console.error("Server Error");
+               if (typeof realfailFunc === "function") {
+                  realfailFunc();
+               }
+               else if(typeof me.Error === "function"){
+                  me.Error("Server Error");
+               }
+               else{
+                 alert("Error: " + data.code + "\n" + data.message);
+               }
+
             }
             $("#" + me.uploadProgressId).hide();
             //$("div.dsw-uploadprogressbar").hide();    // 20170419
@@ -829,11 +854,24 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             $("#" + me.uploadProgressId).hide();
             var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
             $("#"+loadingContainerId).hide();
-            alert(error);
             if(error){
-              console.warn(error);
+              console.error(error);
+              alert(error);
             }else{
-              alert("Connection Error");
+              console.error("Connection error");
+              if (typeof realfailFunc === "function") {
+                 realfailFunc();
+              }
+              else if(typeof me.Error === "function"){
+                 me.Error("Connection error");
+              }
+              else{
+               alert("Connection Error");
+               let retry = function(){
+                 me.uploadMultipart(data, succFunc, failFunc);
+               }
+               setTimeout(retry,3000);
+              }
             }
 
             //ert(xhr.responseText);
