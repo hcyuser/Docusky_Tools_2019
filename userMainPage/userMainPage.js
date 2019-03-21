@@ -5,6 +5,10 @@ var JsonData = null;
 var tmp = {};
 var formData = [];
 var JsonFilename = "";
+var PreviousDocManageTablePrefix = "";
+var PreviousJsonManageTablePrefix = "";
+var DocManageTableOption = {orderCol:0,orderType:"asc",pageLen:100,pageNum:0};
+var JsonManageTableOption = {orderCol:0,orderType:"asc",pageLen:100,pageNum:0};
 $(document).ready( function () {
 
     if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)){
@@ -16,8 +20,6 @@ $(document).ready( function () {
     docuskyJson = docuskyManageDataFileListSimpleUI;
     docuskyDbObj.loginSuccFunc = InitialAfterLogin;
 
-    $('#DocManageTable').DataTable();
-    $('#GISManageTable').DataTable();
     $("#JsonManage").hide();
     GetName();
     GetCorpus();
@@ -127,14 +129,40 @@ function  PrintDocManageTable(AllCorpus){
 
     TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXml("`+DB+`")'>下載</button></td></tr>`;
   }
+
+  if(PreviousDocManageTablePrefix==TablePrefix){
+    return;
+  }else{
+    PreviousDocManageTablePrefix = TablePrefix;
+  }
+
   $('#DocManageTable').DataTable().destroy();
   $("#DocManageTable").html(TablePrefix + `</tbody>`);
   $('#DocManageTable').DataTable({
       paging:true,
       searching:true,
       info:true,
-      columnDefs: [{targets: -1,className: 'dt-body-center'}]
+      columnDefs: [{targets: -1,className: 'dt-body-center'}],
+      order: [[ DocManageTableOption.orderCol, DocManageTableOption.orderType]],
+      pageLength: DocManageTableOption.pageLen
    });
+   $('#DocManageTable').dataTable().fnPageChange(DocManageTableOption.pageNum,true);
+
+   $('#DocManageTable').on( 'order.dt', function () {
+    let order = $('#DocManageTable').DataTable().order();
+    DocManageTableOption.orderCol = order[0][0];
+    DocManageTableOption.orderType = order[0][1];
+    //alert( order[0][0]+":"+order[0][1]);
+   });
+   $('#DocManageTable').on( 'page.dt', function () {
+     DocManageTableOption.pageNum = $('#DocManageTable').DataTable().page.info().page;
+    //console.log(DocManageTableOption.pageNum);
+    });
+  $('#DocManageTable').on( 'length.dt', function ( e, settings, len ) {
+      DocManageTableOption.pageLen = len;
+      //console.log( 'New page length: '+len );
+  });
+
 
 }
 
@@ -183,14 +211,36 @@ function PrintJsonData(JsonData){
     });
 
   }
+
+  if(PreviousJsonManageTablePrefix==TablePrefix){
+    return;
+  }else{
+    PreviousJsonManageTablePrefix = TablePrefix;
+  }
   $('#JsonManageTable').DataTable().destroy();
   $("#JsonManageTable").html(TablePrefix + `</tbody>`);
   $('#JsonManageTable').DataTable({
       paging:true,
       searching:true,
       info:true,
-      columnDefs: [{targets: -1,className: 'dt-body-center'}]
+      columnDefs: [{targets: -1,className: 'dt-body-center'}],
+      order: [[ JsonManageTableOption.orderCol, JsonManageTableOption.orderType]],
+      pageLength: JsonManageTableOption.pageLen
+
    });
+   $('#JsonManageTable').dataTable().fnPageChange(JsonManageTableOption.pageNum,true);
+
+   $('#JsonManageTable').on( 'order.dt', function () {
+    let order = $('#JsonManageTable').DataTable().order();
+    JsonManageTableOption.orderCol = order[0][0];
+    JsonManageTableOption.orderType = order[0][1];
+   });
+   $('#JsonManageTable').on( 'page.dt', function () {
+     JsonManageTableOption.pageNum = $('#JsonManageTable').DataTable().page.info().page;
+    });
+  $('#JsonManageTable').on( 'length.dt', function ( e, settings, len ) {
+      JsonManageTableOption.pageLen = len;
+  });
 
 }
 
