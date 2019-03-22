@@ -115,7 +115,12 @@ function  PrintDocManageTable(AllCorpus){
     let webpage_search = "";
     for(CorpusIndex in CorpusGroup[ DB ]){
       if(CorpusGroup[ DB ].length==1){
-        webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a>`;
+        if(CorpusGroup[ DB ][CorpusIndex]==null){
+          webpage_search += `文字庫建置中`;
+        }else{
+          webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a>`;
+        }
+
       }else{
         webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a><br>`;
       }
