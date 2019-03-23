@@ -88,7 +88,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    // extra data
    this.providerList = [];                     // 2018-10-12
    this.uiState = {};                          // 2018-12-02: uiState[dbCorpusListContainerId] = {size: { width:w, height: h}}
-
+   this.Error = null;                          //all scope error handle
    if (typeof(param)=='object' && 'target' in param) {
       me.target = (param.target.toUpperCase() == 'OPEN') ? 'OPEN' : 'USER';
    }
@@ -284,12 +284,30 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                      }
                   });
                }
-               else alert("Error: " + retObj.message);
+               else{
+                 console.error("Server error");
+                 if(typeof me.Error === "function"){
+                   me.Error("Server error");
+                 }
+                 else {
+                   alert("Error: " + retObj.message);
+                 }
+
+               }
                //setUrlApiPath(me, me.providerList[1]);     // test
             })
             .fail(function(jqXHR, textStatus) {
-               // bypass this silently...
-               //alert(me.urlGetProviderListJson + " request failed: " + textStatus);
+               console.error("Connection error");
+               if(typeof me.Error === "function"){
+                  me.Error("Connection error");
+               }
+               else{
+                alert("Connection error");
+                let retry = function(){
+                  docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
+                }
+                setTimeout(retry,3000);
+               }
             })
             .always(function() {
                // 2018-10-14
@@ -582,14 +600,14 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 		$("#" + providerListContainerOverlayId).hide();
    };
 
-   me.getDbCorpusDocuments = function(target, db, corpus, evt, successFunc) {
+   me.getDbCorpusDocuments = function(target, db, corpus, evt, succFunc, failFunc) {
       var param = { 'target': target,
                     'db': db,
                     'corpus': corpus,
                     'query': '.all',
                     'page': 1,
                     'pageSize': me.pageSize };
-      me.getQueryResultDocuments(param, evt, successFunc);
+      me.getQueryResultDocuments(param, evt, succFunc,failFunc);
    };
 
    // 2016-08-19: pykenny adds "message" to the parameter list
@@ -638,7 +656,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
    };
 
-   me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters) {
+   me.getQueryResultDocuments = function(param, evt, succFunc, failFunc) {
+   //original me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters)
       var my = null;
 
       if (typeof(param) !== 'object') param = {};
@@ -659,8 +678,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
       else my = me;
       my.callerEvent = evt;
-      my.callerCallback = successFunc;
-      my.callerCallbackParameters = successFuncParameters;
+      my.callerCallback = succFunc;
+      //my.callerCallbackParameters = successFuncParameters;
       my.target = target.toUpperCase();
       if (my.target != 'OPEN') my.target = 'USER';
       my.db = db;
@@ -734,6 +753,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
             $("#" + dbCorpusListContainerId).fadeOut();
+            //console.log(data);
             var retChannelKey = data.message.channelKey;
             if (!retChannelKey) {
                // simple case: copy to object "global" area
@@ -747,7 +767,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                me.spotlights = data.message.spotlights;            // 2016-12-18
                me.fieldsInly = (data.message.fieldsOnly !== undefined)
                              ? data.message.fieldsOnly : '';       // 2018-09-15
-               if (typeof me.callerCallback === "function") me.callerCallback(me.callerCallbackParameters);
+               if (typeof me.callerCallback === "function") me.callerCallback();
             }
             else {
                // copy to object's specific variable (channel area)
@@ -784,10 +804,41 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             displayDbCorpusList(param, me.callerEvent);
          }
          else {
-			   $("#" + dbCorpusListContainerId).fadeOut();
-            alert("Error: " + data.code + "\n" + data.message);
+           console.error("Server Error");
+           if (typeof failFunc === "function"){
+             failFunc();
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server error");
+           }
+           else {
+                $("#" + dbCorpusListContainerId).fadeOut();
+                alert("Error: " + data.code + "\n" + data.message);
+           }
+
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+         console.error("Connection error");
+         if(evt || me.displayLoadingIcon){
+           $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           $("#"+loadingContainerId).show();
+         }
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+            me.Error("Connection error");
+         }
+         else{
+          let retry = function(){
+             me.getQueryResultDocuments(param, evt, succFunc, failFunc);
+          }
+          setTimeout(retry,3000);
+         }
+
+      });
    };
 
    me.getQueryPostClassification = function(param, evt, successFunc, successFuncParameters) {
