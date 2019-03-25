@@ -238,12 +238,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
            else me.manageDbList(me.callerEvent, me.callerCallback);
          }
          else {
-            console.error("Login error");
+            console.error("Login Error");
             if (typeof failFunc === 'function'){
               failFunc(jsonObj);
             }
             else if(typeof me.Error === "function"){
-              me.Error("Login error");
+              me.Error("Login Error");
             }
             else {
                $("#" + loginContainerId).show();
@@ -252,24 +252,39 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.error("Connection error");
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
          if (typeof failFunc === "function") {
             failFunc();
          }
          else if(typeof me.Error === "function"){
-            me.Error("Connection error");
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
          }
          else{
           let loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
           let loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
           $("#" + loginContainerId).show();
-          $("#" + loginMessageId).html("Connection error");
-          let retry = function(){
-            //$.ajaxSetup({xhrFields: {withCredentials: true}});
-            //$.ajax(this); //occur CORS
-            me.login(username, password, succFunc, failFunc);
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            $("#" + loginMessageId).html("Server Error");
           }
-          setTimeout(retry,3000);
+          else{
+            $("#" + loginMessageId).html("Connection Error");
+            let retry = function(){
+              me.login(username, password, succFunc, failFunc);
+            }
+            setTimeout(retry,3000);
+          }
+
+
          }
 
       });
@@ -458,12 +473,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
           jelement.show();
         }
         else {                        // fail to invoke delete api
-          console.error("Server error");
+          console.error("Server Error");
           if (typeof failFunc === "function"){
             failFunc();
           }
           else if(typeof me.Error === "function"){
-            me.Error("Server error");
+            me.Error("Server Error");
           }
           else {
             alert("Error: " + data.code + "\n" + data.message);
@@ -471,21 +486,34 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
         }
      }, 'json')
      .fail(function (jqXHR, textStatus, errorThrown){
-        console.error("Connection error");
+       if(jqXHR.status=="404" || jqXHR.status=="403"){
+         console.error("Server Error");
+       }
+       else{
+         console.error("Connection Error");
+       }
         if (typeof failFunc === "function") {
            failFunc();
         }
         else if(typeof me.Error === "function"){
-           me.Error("Connection error");
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            me.Error("Server Error");
+          }
+          else{
+            me.Error("Connection Error");
+          }
         }
         else{
-         alert("Connection error");
-         let retry = function(){
-           //$.ajaxSetup({xhrFields: {withCredentials: true}});
-           //$.ajax(this); //occur CORS
-           me.deleteDb(DbTitle,succFunc,failFunc);
-         }
-         setTimeout(retry,3000);
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            alert("Server Error");
+          }
+          else{
+            alert("Connection Error");
+            let retry = function(){
+              me.deleteDb(DbTitle,succFunc,failFunc);
+            }
+            setTimeout(retry,3000);
+          }
         }
 
      });
@@ -510,12 +538,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             jelement.show();
          }
          else {
-           console.error("Server error");
+           console.error("Server Error");
            if (typeof failFunc === "function"){
              failFunc();
            }
            else if(typeof me.Error === "function"){
-             me.Error("Server error");
+             me.Error("Server Error");
            }
            else {
              alert("Error: " + data.code + "\n" + data.message);
@@ -523,21 +551,34 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.error("Connection error");
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
          if (typeof failFunc === "function") {
             failFunc();
          }
          else if(typeof me.Error === "function"){
-            me.Error("Connection error");
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
          }
          else{
-          alert("Connection error");
-          let retry = function(){
-            //$.ajaxSetup({xhrFields: {withCredentials: true}});
-            //$.ajax(this); //occur CORS
-            me.renameDbTitle(oldDbTitle, newDbTitle, succFunc, failFunc);
-          }
-          setTimeout(retry,3000);
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+           }
+           else{
+             alert("Connection Error");
+             let retry = function(){
+               me.renameDbTitle(oldDbTitle, newDbTitle, succFunc, failFunc);
+             }
+             setTimeout(retry,3000);
+           }
          }
 
       });
@@ -576,7 +617,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
              failFunc();
            }
            else if(typeof me.Error === "function"){
-             me.Error("Server error");
+             me.Error("Server Error");
            }
            else {
              alert("Error: " + data.code + "\n" + data.message);
@@ -584,24 +625,46 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.error("Connection error");
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
          if(evt){
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
            $("#"+loadingContainerId).show();
            let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+           }
+           else{
+             $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           }
+
          }
          if (typeof failFunc === "function") {
             failFunc();
          }
          else if(typeof me.Error === "function"){
-            me.Error("Connection error");
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
          }
          else{
-          let retry = function(){
-            me.getUserProfile(evt, succFunc, failFunc);
-          }
-          setTimeout(retry,3000);
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+           }
+           else{
+             let retry = function(){
+               me.getUserProfile(evt, succFunc, failFunc);
+             }
+             setTimeout(retry,3000);
+           }
+
          }
 
       });
@@ -628,7 +691,6 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.get( me.urlGetDbListJson, function(data) {
-
          if(evt){
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
            $("#"+loadingContainerId).hide();
@@ -719,8 +781,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-          console.log(jqXHR.status);
-         //console.error("Connection error");
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+
          if(evt){
 
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
@@ -732,7 +799,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
            $("#"+loadingContainerId).css({ top: posTop + 'px', left: posLeft + 'px' });
            $("#"+loadingContainerId).show();
            let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+           }
+           else{
+             $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           }
+
          }
          if (typeof failFunc === "function") {
             me.hideWidget(me.displayWidget);
@@ -740,16 +813,26 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
          else if(typeof me.Error === "function"){
             me.hideWidget(me.displayWidget);
-            me.Error("Connection error");
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              me.Error("Server Error");
+            }
+            else{
+              me.Error("Connection Error");
+            }
+
          }
          else{
-
-          let retry = function(){
-            //$.ajaxSetup({xhrFields: {withCredentials: true}});
-            //$.ajax(this); //occur CORS
-            me.manageDbList(evt, succFunc, failFunc);
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+          }else{
+            let retry = function(){
+              //$.ajaxSetup({xhrFields: {withCredentials: true}});
+              //$.ajax(this); //occur CORS
+              me.manageDbList(evt, succFunc, failFunc);
+            }
+            setTimeout(retry,3000);
           }
-          setTimeout(retry,3000);
+
          }
 
       });
@@ -775,16 +858,20 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
    // 2017-08-09: open uploadMultipart() method
-   me.uploadMultipart = function(data, succFunc, failFunc) {       // 2017-04-23: add callback
-      // Big issue: Change from me.uploadMultipart = function(url, data, callback) to me.uploadMultipart = function(data, succFunc, failFunc)
+   me.uploadMultipart = function(data, succFunc, failFunc, option) {       // 2017-04-23: add callback
+      // Big issue: Change from me.uploadMultipart = function(url, data, succFunc, failFunc) to me.uploadMultipart = function(data, succFunc, failFunc)
       // It's needed to judge the parameter first.
-      var realData = data;
-      var realsuccFunc = succFunc;
-      var realfailFunc = failFunc;
-      if(data==me.urlUploadXmlFilesToBuildDbJson){
+      var realData = null;
+      var realsuccFunc = null;
+      var realfailFunc = null;
+      if(succFunc && typeof succFunc !== 'function'){ //old version
         realData = succFunc;
         realsuccFunc = failFunc;
-        realfailFunc = null;
+        realfailFunc = option;
+      }else{  //new version
+        realData = data;
+        realsuccFunc = succFunc;
+        realfailFunc = failFunc;
       }
 
       let workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
@@ -861,19 +948,35 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
               console.error(error);
               alert(error);
             }else{
-              console.error("Connection error");
+              if(xhr.status=="0"){
+                console.error("Server Error");
+              }
+              else{
+                console.error("Connection Error");
+              }
               if (typeof realfailFunc === "function") {
                  realfailFunc();
               }
               else if(typeof me.Error === "function"){
-                 me.Error("Connection error");
+                 if(xhr.status=="0"){
+                   me.Error("Server Error");
+                 }
+                 else{
+                   me.Error("Connection Error");
+                 }
               }
               else{
-               alert("Connection Error");
-               let retry = function(){
-                 me.uploadMultipart(data, succFunc, failFunc);
-               }
-               setTimeout(retry,3000);
+                if(xhr.status=="0"){
+                  alert("Server Error");
+                }
+                else{
+                  alert("Connection Error");
+                  let retry = function(){
+                    me.uploadMultipart(data, succFunc, failFunc, option);
+                  }
+                  setTimeout(retry,3000);
+                }
+
               }
             }
 
