@@ -85,8 +85,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       //var scriptPath = me.utility.getScriptPath();
       //me.urlHostPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
       // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlHostPath = "https://docusky.org.tw/DocuSky";
-      //alert(me.urlHostPath);                  // e.g., http://localhost:8000/PHP5/DocuSky
+      let scheme = location.protocol.substr(0, location.protocol.length-1);
+      if (scheme == 'file') me.urlHostPath = "https://docusky.org.tw/docusky";
+      else me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy'));// e.g., http://localhost:8000/PHP5/DocuSky
+      //alert(me.urlHostPath);
       me.urlWebApiPath = me.urlHostPath + '/webApi';
       me.urlGetDbListJson =  me.urlWebApiPath + '/getDbListJson.php';
       me.urlUploadXmlFilesToBuildDbJson =  me.urlWebApiPath + '/uploadXmlFilesToBuildDbJson.php';
@@ -625,7 +627,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get(me.urlGetDbListJson, function(data) {
+      $.get( me.urlGetDbListJson, function(data) {
 
          if(evt){
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
@@ -717,13 +719,14 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.error("Connection error");
+          console.log(jqXHR.status);
+         //console.error("Connection error");
          if(evt){
 
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
            let w = $("#"+loadingContainerId).width();
            let h = $("#"+loadingContainerId).height();
-           let overX = Math.max(0, evt.pageX - 40 + w - winWidth);     
+           let overX = Math.max(0, evt.pageX - 40 + w - winWidth);
            let posLeft = Math.max(10, evt.pageX - overX - 40);
            var posTop = evt.pageY + 5;
            $("#"+loadingContainerId).css({ top: posTop + 'px', left: posLeft + 'px' });
@@ -908,7 +911,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
    //// 動態載入 utility functions
-   //me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
    me.utility = docuskyWidgetUtilityFunctions;
    if (!me.initialized) init();
 
