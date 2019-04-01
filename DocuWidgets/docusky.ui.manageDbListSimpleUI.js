@@ -20,7 +20,8 @@
  * 0.10 (May 13 2018) add default 'corpusClick' function
  * 0.11 (Feb 19 2019) add renameDbTitle, getUserProfile function (modify widgetEvents so that the callback func
  *                    has evt in the first arg and this in the second arg)
- *
+ * 0.12 (April 01 2019) add error handling and me.Error for the most functions and
+                        modify the parameter of uploadMultipart()
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
@@ -858,8 +859,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
    // 2017-08-09: open uploadMultipart() method
-   me.uploadMultipart = function(data, succFunc, failFunc, option) {       // 2017-04-23: add callback
-      // Big issue: Change from me.uploadMultipart = function(url, data, succFunc, failFunc) to me.uploadMultipart = function(data, succFunc, failFunc)
+   me.uploadMultipart = function(data, succFunc, failFunc, option) {
+      // Big issue: Change from me.uploadMultipart = function(url, data, callback) (2017-04-23: add callback) to me.uploadMultipart = function(data, succFunc, failFunc, option)
       // It's needed to judge the parameter first.
       var realData = null;
       var realsuccFunc = null;
