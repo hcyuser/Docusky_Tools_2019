@@ -310,7 +310,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
    // 2017-12-28: current events 'dbClick', 'corpusAttCntClick', 'corpusClick', 'attCntClick'
    me.enableWidgetEvent = function(evtKey, callback) {
-      if (me.validEvtKeys.indexOf(evtKey) !== false) {
+      if (me.validEvtKeys.indexOf(evtKey) !== false && typeof(callback)==='function') {
          me.widgetEvents[evtKey] = callback;
       }
    }
