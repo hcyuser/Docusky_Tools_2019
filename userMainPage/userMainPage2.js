@@ -31,8 +31,11 @@ $(document).ready( function () {
         $('#LoginDialog').modal('show');
         $("#DbList_loginContainer_0").hide();
       }
+
     }
     setInterval(removeWidgetLogin, 100);
+
+
 
 } );
 
@@ -45,19 +48,44 @@ function InitialAfterLogin(data){
 function goToTop() {
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
+  if($('#DocManage').is(":visible")){
+    $('.dataTables_scrollBody').animate({
+      scrollTop: $('#DocManageTable tbody tr').eq(3).offset().top
+    }, 800);
+
+  }
+  if($('#JsonManage').is(":visible")){
+    $('.dataTables_scrollBody').animate({
+      scrollTop: $('#JsonManageTable tbody tr').eq(3).offset().top
+    }, 800);
+  }
 }
 
-function pinLeftControlBTM(selector){
+function hideLeftControlPanelHandle(){
 
-  if(selector.parent().parent().parent().attr( 'style' )){
-    selector.parent().parent().parent().removeAttr('style');
-    selector.removeAttr('style');
+
+  if($('#LeftControlPanel').is(":visible")){
+    $('#LeftControlPanel').toggle();
+    $('#DocManage').removeClass('col-md-9 col-xl-10');
+    $('#DocManage').addClass('col-12');
+    $('#JsonManage').removeClass('col-md-9 col-xl-10');
+    $('#JsonManage').addClass('col-12');
   }else{
-    selector.parent().parent().parent().attr( 'style', "position: -webkit-sticky;position: sticky;top: 20;border-radius: 4px;z-index:999;");
-    selector.attr( 'style','background-color: orangered; border-radius: 3px;');
+    $('#LeftControlPanel').toggle();
+    $('#DocManage').addClass('col-md-9 col-xl-10');
+    $('#DocManage').removeClass('col-12');
+    $('#JsonManage').addClass('col-md-9 col-xl-10');
+    $('#JsonManage').removeClass('col-12');
   }
 
+  GetCorpus();
+  GetJson();
+  $('#JsonManageTable').DataTable().columns.adjust().draw();
+  $('#DocManageTable').DataTable().columns.adjust().draw();
+
+
 }
+
 
 function hideUploadTool(){
   if($("#DocManage").is(":visible")){
@@ -147,6 +175,8 @@ function  PrintDocManageTable(AllCorpus){
       paging:true,
       searching:true,
       info:true,
+      scrollY: "500px",
+      scrollCollapse: true,
       columnDefs: [{targets: -1,className: 'dt-body-center'}],
       order: [[ DocManageTableOption.orderCol, DocManageTableOption.orderType]],
       pageLength: DocManageTableOption.pageLen
@@ -228,6 +258,8 @@ function PrintJsonData(JsonData){
       paging:true,
       searching:true,
       info:true,
+      scrollY: "500px",
+      scrollCollapse: true,
       columnDefs: [{targets: -1,className: 'dt-body-center'}],
       order: [[ JsonManageTableOption.orderCol, JsonManageTableOption.orderType]],
       pageLength: JsonManageTableOption.pageLen
@@ -246,6 +278,7 @@ function PrintJsonData(JsonData){
   $('#JsonManageTable').on( 'length.dt', function ( e, settings, len ) {
       JsonManageTableOption.pageLen = len;
   });
+
 
 }
 
