@@ -99,6 +99,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       //me.urlUpdateUserProfileJson = me.urlWebApiPath + '/updateUserProfileJson.php';    // api not existed yet
       me.urlLogin = me.urlWebApiPath + '/userLoginJson.php';
       me.urlLogout = me.urlWebApiPath + '/userLogoutJson.php';
+      me.urlUserMain = me.urlHostPath + '/docuTools/userMain/';
       me.username = '';
 
       me.uniqueId = me.utility.uniqueId();
@@ -142,6 +143,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
       var dbListImportToBuildDbId = me.idPrefix + "dbListImportToBuildDb" + me.uniqueId;
       var logoutAnchorId = me.idPrefix + "logoutAnchor" + me.uniqueId;
+      var docuskyLinkAnchorId = me.idPrefix + "DocuSkyLinkAnchor" + me.uniqueId;
       var closeDbListId = me.idPrefix + "closeDbList" + me.uniqueId;	// 20170224
       var uploadXmlFileId = me.idPrefix + "uploadXmlFile" + me.uniqueId;
       var uploadXmlToBuildDbId = me.idPrefix + "uploadXmlToBuildDb" + me.uniqueId;
@@ -153,7 +155,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var t = "登出";
       var s = "<div id='" + dbListContainerId + "' class='dsw-container'>"
             + "<div class='dsw-titleBar'>"
-            + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>資料庫文獻集列表</div></td>"
+            + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>資料庫文獻集列表</div>&nbsp;&nbsp;&nbsp;<span class='dsw-btn-docusky' id='" + docuskyLinkAnchorId + "'>DocuSky</span></td>"
             + "<td class='dsw-closeContainer'><div class='dsw-btn-close' id='" + closeDbListId + "'>&#x2716;</div><span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span><span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span></td></tr></table>"
             + "</div>"
             + "<div id='" + dbListContentId + "' class='dsw-containerContent'>"
@@ -189,6 +191,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                alert(jsonObj.code + ': ' + jsonObj.message);
             }
          }, 'json');
+      });
+
+      $("#" + docuskyLinkAnchorId).click(function(e) {
+          window.open(me.urlUserMain);
       });
 
       $("#" + closeDbListId).click(function(e) {
@@ -949,35 +955,19 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
               console.error(error);
               alert(error);
             }else{
-              if(xhr.status=="0"){
-                console.error("Server Error");
-              }
-              else{
-                console.error("Connection Error");
-              }
+              console.error("Connection Error");
               if (typeof realfailFunc === "function") {
-                 realfailFunc();
+                realfailFunc();
               }
               else if(typeof me.Error === "function"){
-                 if(xhr.status=="0"){
-                   me.Error("Server Error");
-                 }
-                 else{
-                   me.Error("Connection Error");
-                 }
+                me.Error("Connection Error");
               }
               else{
-                if(xhr.status=="0"){
-                  alert("Server Error");
+                alert("Connection Error");
+                let retry = function(){
+                  me.uploadMultipart(data, succFunc, failFunc, option);
                 }
-                else{
-                  alert("Connection Error");
-                  let retry = function(){
-                    me.uploadMultipart(data, succFunc, failFunc, option);
-                  }
-                  setTimeout(retry,3000);
-                }
-
+                setTimeout(retry,3000);
               }
             }
 
@@ -1121,6 +1111,9 @@ $('head').append('<style id="dsw-simplecomboui">'
    + '.dsw-titleContainer { width: 60%; padding: 0; }'
    + '.dsw-closeContainer { position: relative; text-align: right; direction: rtl; padding: 0; }'
    + '.dsw-titlename { display: inline-block; line-height: 16px; white-space: nowrap; }'
+   + '.dsw-btn-docusky { position: absolute; color:#2F2F2F; background-color:#EFEFEF; border-radius: 3px; font-size: 0.75rem; line-height: 0.75rem; padding: 4px; margin: 0 24px 0 0; cursor: pointer; }'
+   + '.dsw-btn-docusky:hover { background-color:#BFBFBF; color:#96438A; }'
+   + '.dsw-btn-docusky:active { background-color:#BFBFBF; color:#96438A; }'
    + '.dsw-btn-close { display: inline-block; line-height: 16px; cursor: pointer; }'
    + '.dsw-btn-close:hover { background-color:#BFBFBF; color:#96438A; }'
    + '.dsw-btn-close:active { background-color:#BFBFBF; color:#96438A; }'
