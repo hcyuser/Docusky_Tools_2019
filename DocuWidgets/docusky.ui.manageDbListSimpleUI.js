@@ -49,7 +49,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.urlDeleteDbJson = null;
    me.urlLogin = null;
    me.urlLogout = null;
-   me.username = '';
+   me.displayname = '';
    me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
@@ -100,7 +100,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       me.urlLogin = me.urlWebApiPath + '/userLoginJson.php';
       me.urlLogout = me.urlWebApiPath + '/userLogoutJson.php';
       me.urlUserMain = me.urlHostPath + '/docuTools/userMain/';
-      me.username = '';
+      me.displayname = '';
 
       me.uniqueId = me.utility.uniqueId();
 
@@ -140,7 +140,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       // dbListContainer container
       var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
       var dbListContentId = me.idPrefix + "dbListContent" + me.uniqueId;
-      var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
+      var spanDisplaynameId = me.idPrefix + "spanDisplayname" + me.uniqueId;
       var dbListImportToBuildDbId = me.idPrefix + "dbListImportToBuildDb" + me.uniqueId;
       var logoutAnchorId = me.idPrefix + "logoutAnchor" + me.uniqueId;
       var docuskyLinkAnchorId = me.idPrefix + "DocuSkyLinkAnchor" + me.uniqueId;
@@ -156,7 +156,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var s = "<div id='" + dbListContainerId + "' class='dsw-container'>"
             + "<div class='dsw-titleBar'>"
             + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>資料庫文獻集列表</div>&nbsp;&nbsp;&nbsp;<span class='dsw-btn-docusky' id='" + docuskyLinkAnchorId + "'>DocuSky</span></td>"
-            + "<td class='dsw-closeContainer'><div class='dsw-btn-close' id='" + closeDbListId + "'>&#x2716;</div><span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span><span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span></td></tr></table>"
+            + "<td class='dsw-closeContainer'><div class='dsw-btn-close' id='" + closeDbListId + "'>&#x2716;</div><span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span><span class='dsw-displaynameContainer'><span class='dsw-displayname' id='" + spanDisplaynameId + "'>" + me.displayname + "</span></span></td></tr></table>"
             + "</div>"
             + "<div id='" + dbListContentId + "' class='dsw-containerContent'>"
             + "</div>"
@@ -724,11 +724,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
             //2019-03-08 inset username on dbListContainerId
             //Owning to the init() limit, it is needed to insert username here.
-            if(!me.username){
+            if(!me.displayname){
               me.getUserProfile(null,function(data){
-                me.username = data.username;
-                var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
-                $("#"+spanUsernameId).html(me.username);
+                me.displayname = data.display_name;
+                var spanDisplaynameId = me.idPrefix + "spanDisplayname" + me.uniqueId;
+                $("#"+spanDisplaynameId).html(me.displayname);
               });
             }
 
@@ -1119,8 +1119,8 @@ $('head').append('<style id="dsw-simplecomboui">'
    + '.dsw-btn-close:active { background-color:#BFBFBF; color:#96438A; }'
    + '.dsw-td-dbcorpuslist { vertical-align: middle; padding: 0.25rem;}'
    + '.dsw-td-dbcorpuslist-num { text-align: right;}'
-   + '.dsw-useridContainer { display: inline-block; width: 50px; white-space: nowrap; overflow: visible; margin: 0 72px 0 0; }'
-   + '.dsw-userid { display: inline-block; direction: ltr; }'
+   + '.dsw-displaynameContainer { display: inline-block; width: 50px; white-space: nowrap; overflow: visible; margin: 0 72px 0 0; }'
+   + '.dsw-displayname { display: inline-block; direction: ltr; }'
    + '.dsw-btn-logout { position: absolute; right: 0; top: -2px; color:#2F2F2F; background-color:#EFEFEF; border-radius: 3px; font-size: 0.75rem; line-height: 0.75rem; padding: 4px; margin: 0 24px 0 0; cursor: pointer; }'
    + '.dsw-btn-logout:hover { background-color:#BFBFBF; color:#96438A; }'
    + '.dsw-btn-logout:active { background-color:#BFBFBF; color:#96438A; }'
