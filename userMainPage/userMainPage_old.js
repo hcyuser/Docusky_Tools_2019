@@ -4,31 +4,73 @@ var docuskyDbObj = null;
 var JsonData = null;
 var tmp = {};
 var formData = [];
-
+var JsonFilename = "";
+var PreviousDocManageTablePrefix = "";
+var PreviousJsonManageTablePrefix = "";
+var DocManageTableOption = {orderCol:0,orderType:"asc",pageLen:100,pageNum:0};
+var JsonManageTableOption = {orderCol:0,orderType:"asc",pageLen:100,pageNum:0};
 $(document).ready( function () {
+
+    if(/^((?!chrome|android).)*safari/i.test(navigator.userAgent)){
+      $('body > header .small-9.columns').hide();
+    }
+
     docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
-    let param = {
-                target: 'USER',
-                db: docuSkyObj.db,
-                corpus: '[ALL]',
-                query: '.all',
-                page: docuSkyObj.page, // current page
-                pageSize: docuSkyObj.pageSize
-            };
-    //docuSkyObj.getQueryResultDocuments(param, null, null);
-    //$("body").hover(function() {
-    //    if($("#CorpusDoc_dbCorpusListContainer_0").is(":visible")){
-    //       docuSkyObj.hideWidget(true);
-    //    }
-    //});
-    docuskyDbObj.manageDbList(null);
-    $('#DocManageTable').DataTable();
-    $('#GISManageTable').DataTable();
+    docuskyDbObj.loginSuccFunc = InitialAfterLogin;
+
+    $("#JsonManage").hide();
+    GetName();
     GetCorpus();
     GetJson();
+
+    let removeWidgetLogin  = function(){
+      if($("#DbList_loginContainer_0").is(':visible')){
+        $('#LoginDialog').modal({backdrop: 'static', keyboard: false});
+        $('#LoginDialog').modal('show');
+        $("#DbList_loginContainer_0").hide();
+      }
+    }
+    setInterval(removeWidgetLogin, 100);
+
 } );
+
+function InitialAfterLogin(data){
+  GetName();
+  GetCorpus();
+  GetJson();
+}
+
+function goToTop() {
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
+
+function pinLeftControlBTM(selector){
+
+  if(selector.parent().parent().parent().attr( 'style' )){
+    selector.parent().parent().parent().removeAttr('style');
+    selector.removeAttr('style');
+  }else{
+    selector.parent().parent().parent().attr( 'style', "position: -webkit-sticky;position: sticky;top: 20;border-radius: 4px;z-index:999;");
+    selector.attr( 'style','background-color: orangered; border-radius: 3px;');
+  }
+
+}
+
+function hideUploadTool(){
+  if($("#DocManage").is(":visible")){
+    $("#DocManageUploadTool").toggle();
+  }
+  if($("#JsonManage").is(":visible")){
+    $("#JsonManageUploadTool").toggle();
+  }
+}
+
+function GetName(){
+  docuskyDbObj.getUserProfile(null, function(data){ $(".user").html(data.display_name+" 的資料庫");});
+}
 
 function GetCorpus(){
 
@@ -46,6 +88,7 @@ function GetCorpus(){
         }
     });
 }
+
 function  PrintDocManageTable(AllCorpus){
   let CorpusGroup = {}, DBStatus = {}, DBTime = {};
   let TablePrefix = `<thead>
@@ -72,28 +115,59 @@ function  PrintDocManageTable(AllCorpus){
     let webpage_search = "";
     for(CorpusIndex in CorpusGroup[ DB ]){
       if(CorpusGroup[ DB ].length==1){
-        webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a>`;
+        if(CorpusGroup[ DB ][CorpusIndex]==null){
+          webpage_search += `文字庫建置中`;
+        }else{
+          webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a>`;
+        }
+
       }else{
         webpage_search += `<a href="https://docusky.org.tw/DocuSky/webApi/webpage-search-3in1.php?target=USER&db=`+DB+`&corpus=`+CorpusGroup[ DB ][CorpusIndex]+`">`+CorpusGroup[ DB ][CorpusIndex]+`</a><br>`;
       }
 
     }
-    //console.log(webpage_search);
-    //CorpusGroup[ DB ].join( '<br>' )
+
     TablePrefix += `<tr><td>` + DB + `</td><td>`
                 + webpage_search + `</td><td>`
-                + status[DBStatus[ DB ]] + `</td><td>`
-                + DBTime[DB] + `</td>`;
+                + status[DBStatus[ DB ]] + `</td><td><p>`
+                + DBTime[DB].split(" ").join("<br>") + `</p></td>`;
 
     TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXml("`+DB+`")'>下載</button></td></tr>`;
   }
+
+  if(PreviousDocManageTablePrefix==TablePrefix){
+    return;
+  }else{
+    PreviousDocManageTablePrefix = TablePrefix;
+  }
+
   $('#DocManageTable').DataTable().destroy();
   $("#DocManageTable").html(TablePrefix + `</tbody>`);
   $('#DocManageTable').DataTable({
       paging:true,
       searching:true,
-      info:true
+      info:true,
+      columnDefs: [{targets: -1,className: 'dt-body-center'}],
+      order: [[ DocManageTableOption.orderCol, DocManageTableOption.orderType]],
+      pageLength: DocManageTableOption.pageLen
    });
+   $('#DocManageTable').dataTable().fnPageChange(DocManageTableOption.pageNum,true);
+
+   $('#DocManageTable').on( 'order.dt', function () {
+    let order = $('#DocManageTable').DataTable().order();
+    DocManageTableOption.orderCol = order[0][0];
+    DocManageTableOption.orderType = order[0][1];
+    //alert( order[0][0]+":"+order[0][1]);
+   });
+   $('#DocManageTable').on( 'page.dt', function () {
+     DocManageTableOption.pageNum = $('#DocManageTable').DataTable().page.info().page;
+    //console.log(DocManageTableOption.pageNum);
+    });
+  $('#DocManageTable').on( 'length.dt', function ( e, settings, len ) {
+      DocManageTableOption.pageLen = len;
+      //console.log( 'New page length: '+len );
+  });
+
 
 }
 
@@ -123,21 +197,55 @@ function PrintJsonData(JsonData){
   </tr>
   </thead>
   <tbody>`;
+  if(typeof(JsonData)==='string'){
+    return;
+  }
   for(catgory in JsonData){
    JsonData[catgory].forEach(function(item, index){
      item  = item.split("/");
-     //alert(item[0]+" "+ item[1]);
-    TablePrefix += `<tr><td>` + catgory + `</td><td>` + item[0] + `</td><td>` + item[1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>重新命名</button> <button type="button" onclick='deleteJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+item[0]+`", "`+item[1]+`")'>下載</button></td></tr>`;
+     let multipath = item[0];
+
+     item.forEach(function(it,index){
+       if(index!=(item.length-1)&& index!=0){
+         multipath = multipath + "/" + it;
+       }
+
+      });
+
+     TablePrefix += `<tr><td>` + catgory + `</td><td>` + multipath.split("/").join("/<br>") + `</td><td>` + item[item.length-1] + `</td>` + `<td> <button type='button' onclick='renameJsonDialogContent("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>更名</button>  <button type="button" onclick='deleteJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>刪除</button> <button type="button" onclick='retrieveJson("`+catgory+`", "`+multipath+`", "`+item[item.length-1]+`")'>下載</button></td></tr>`;
     });
 
+  }
+
+  if(PreviousJsonManageTablePrefix==TablePrefix){
+    return;
+  }else{
+    PreviousJsonManageTablePrefix = TablePrefix;
   }
   $('#JsonManageTable').DataTable().destroy();
   $("#JsonManageTable").html(TablePrefix + `</tbody>`);
   $('#JsonManageTable').DataTable({
       paging:true,
       searching:true,
-      info:true
+      info:true,
+      columnDefs: [{targets: -1,className: 'dt-body-center'}],
+      order: [[ JsonManageTableOption.orderCol, JsonManageTableOption.orderType]],
+      pageLength: JsonManageTableOption.pageLen
+
    });
+   $('#JsonManageTable').dataTable().fnPageChange(JsonManageTableOption.pageNum,true);
+
+   $('#JsonManageTable').on( 'order.dt', function () {
+    let order = $('#JsonManageTable').DataTable().order();
+    JsonManageTableOption.orderCol = order[0][0];
+    JsonManageTableOption.orderType = order[0][1];
+   });
+   $('#JsonManageTable').on( 'page.dt', function () {
+     JsonManageTableOption.pageNum = $('#JsonManageTable').DataTable().page.info().page;
+    });
+  $('#JsonManageTable').on( 'length.dt', function ( e, settings, len ) {
+      JsonManageTableOption.pageLen = len;
+  });
 
 }
 
@@ -178,6 +286,7 @@ var readFile = function(file){
 };
 
 function UploadXMLBTN(event){
+  $("#uploadXmlToBuildDbId").html("上傳中");
   event.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
   var url = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
   formData = [];
@@ -187,79 +296,13 @@ function UploadXMLBTN(event){
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
   //console.log(formData);
-  
-  docuskyDbObj.uploadMultipart(url, formData);
-
+  docuskyDbObj.uploadMultipart(url, formData,function(data){
+    $("#uploadXmlToBuildDbId").html("開始上傳");
+    alert(data.message);
+    GetCorpus();
+  });
 }
 
-var uploadMultipart = function(url, data) {
-   alert('uploading...');
-        var mul = buildMultipart(data);
-        $.ajax({
-            url: url,
-            data: mul.data,
-            processData: false,
-            type: "post",
-            //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
-            contentType: "multipart/form-data; boundary=" + mul.myBoundary,
-            xhr: function() {
-                var xhr = $.ajaxSettings.xhr();
-                // upload progress
-                xhr.upload.addEventListener("progress", function(evt) {
-                    if (evt.lengthComputable) {
-                        var position = evt.loaded || evt.position;
-                        var percentComplete_f = position / evt.total * 100;	// 20170302
-                        var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
-                        var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
-                        $("#" + uploadProgressId + " .ds-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
-                        //$("#" + uploadProgressId).text(percentComplete_i + '%' + r);
-                    }
-                }, false);     // true: event captured in capturing phase, false: bubbling phase
-                return xhr;
-            },
-            success: function(data, status, xhr) {
-                if (data.code == 0) {              // successfully get db list
-                    alert(data.message);
-                }
-                else {
-                    alert("Error: " + data.code + '\n' + data.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                //var err = eval("(" + xhr.responseText + ")");
-                alert(error);
-            }
-        });
-
-    };
-
-    var buildMultipart = function(data) {
-        var key, crunks = [], myBoundary;
-        myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
-        myBoundary = '(-----------docusky:' + myBoundary + ')';
-
-        for (var key in data){
-            if (key == "file") {
-                crunks.push("--" + myBoundary + '\r\n' +
-                    "Content-Disposition: form-data; name='" + data[key].name + "'; filename='" + data[key].filename + "'" + '\r\n' +
-                    'Content-Type: application/octet-stream\r\n' +
-                    'Content-Transfer-Encoding: binary\r\n\r\n' +
-                    data[key].value);
-            }
-            else{
-                crunks.push("--" + myBoundary + '\r\n' +
-                    "Content-Disposition: form-data; name='" +
-                    data[key].name + "'" +
-                    '\r\n\r\n' +
-                    data[key].value);
-            }
-        }
-
-        return {
-            myBoundary: myBoundary,
-            data: crunks.join('\r\n') + '\r\n--' + myBoundary + "--"
-        };
-    };
 
 function UploadJson(event){
   event.preventDefault();
@@ -273,7 +316,7 @@ function UploadJson(event){
 
 function storeJsonCallback() {
    alert("上傳成功");
-   GetCorpus();
+   GetJson();
 }
 
 function readJsonFile(file){
@@ -309,36 +352,40 @@ function renameJson(){
 }
 
 function deleteJson(catgory, datapath, filename){
+  let r = confirm("確定要刪除嗎？");
+  if(r!=true){
+      return;
+  }
   let transporter = docuskyJson.jsonTransporter;
-  transporter.deleteDataFile(catgory, datapath, filename, null);
-  alert("刪除成功");
-  GetJson();
+  transporter.deleteDataFile(catgory, datapath, filename, function(){
+    alert("刪除成功");
+    GetJson();
+  });
+
 
 }
 
 function retrieveJson(catgory,datapath,filename){
    window.open('https://docusky.org.tw/docusky/webApi/getDataFileBinary.php?catpathfile='+catgory+"/"+datapath+"/"+filename);
    let transporter = docuskyJson.jsonTransporter;
-   transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback(filename));
+   JsonFilename = filename;
+   transporter.retrieveJson(catgory, datapath, filename, retrieveJsonCallback);
 
 }
 
-function retrieveJsonCallback(filename){
-  alert(filename);
+function retrieveJsonCallback(){
+
   let json = docuskyJson.jsonTransporter.jsonObj;
-  alert(JSON.stringify(json));
-/*
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(json)));
-  element.setAttribute('download', filename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);*/
+  let blob = new Blob([JSON.stringify(json)]);
+  saveAs(blob, JsonFilename);
 
 }
 
 function deleteXML(DB){
+  let r = confirm("確定要刪除嗎？");
+  if(r!=true){
+      return;
+  }
   var URL = "https://docusky.org.tw/DocuSky/webApi/deleteDbJson.php?db="+DB;
   $.ajax({
      type: 'GET',
@@ -361,9 +408,43 @@ function renameDBDialogContent(oldname){
 }
 
 function renameDB(){
-  docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),null);
-  $("#renameDBDialog").modal('hide');
-  GetCorpus();
+  docuskyDbObj.renameDbTitle($("#oldDBName").html(), $("#newDBName").val(),function(){
+    $("#renameDBDialog").modal('hide');
+    alert("命名成功");
+    GetCorpus();
+  });
+
+
+}
+
+function Logout(){
+  var URL = "https://docusky.org.tw/DocuSky/webApi/userLogoutJson.php";
+  $.ajax({
+     type: 'GET',
+     url: URL,
+     dataType: 'json',
+     success: function (data) {
+        console.log("成功登出");
+     },
+     error: function(response){
+          console.log(response.responseText);
+        }
+  });
+}
+
+function Login(){
+  docuskyDbObj.login($("#DocuSkyUsername").val(),$("#DocuSkyPassword").val(),loginSuccFunc,loginFailFunc);
+
+}
+function loginSuccFunc(){
+  alert("登入成功");
+  location.reload();
+
+}
+
+function loginFailFunc(){
+  alert("帳號或密碼錯誤");
+  $("#DocuSkyPassword").val("");
 }
 
 /*------------------download DocuXml-------------------*/
@@ -396,7 +477,7 @@ var downloadDocuXml = function (dbname) {
             param.page += 1;
             docuSkyObj.getQueryResultDocuments(param, null, getDocList);
         } else {
-
+            $("#LoadingDialog").modal('hide');
             let exporter = new DocuSkyExporter();
             let xmlString = exporter.generateDocuXml(documents, param.db);
             let blob = new Blob([xmlString]);
@@ -407,8 +488,9 @@ var downloadDocuXml = function (dbname) {
 
     docuSkyObj.hideLoadingIcon(true);
     alert("下載中，請稍候");
+    $('#LoadingDialog').modal({backdrop: 'static', keyboard: false});
+    $("#LoadingDialog").modal('show');
     docuSkyObj.getQueryResultDocuments(param, null, getDocList);
-
 
 };
 

@@ -17,6 +17,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.1.2/css/fixedHeader.dataTables.min.css">
+    <script src="https://cdn.datatables.net/fixedheader/3.1.2/js/dataTables.fixedHeader.min.js"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <script src="./userMainPage.js"></script>
     <style>
@@ -25,9 +27,9 @@
       }
       #TOPBTN {
         position: fixed;
-        bottom: 20px;
+        bottom: 80px;
         left: 20px;
-        z-index: 99;
+        z-index: 1000;
         font-size: 18px;
         border: none;
         outline: none;
@@ -39,9 +41,9 @@
       }
       #HideLeftControlPanel{
         position: fixed;
-        bottom: 20px;
+        bottom: 80px;
         left: 40px;
-        z-index: 99;
+        z-index: 1000;
         font-size: 18px;
         border: none;
         outline: none;
@@ -51,45 +53,12 @@
         padding: 8px;
         border-radius: 4px;
       }
-      #HideUploadTool {
-        position: fixed;
-        bottom: 20px;
-        left: 70px;
-        z-index: 99;
-        font-size: 12px;
-        border: none;
-        outline: none;
-        background-color: #555;
-        color: white;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 4px;
-      }
-
       .UploadTool{
-        position: -webkit-sticky;
         position: sticky;
-        top: 0;
         background-color: lightyellow;
         border-radius: 4px;
         z-index:999;
       }
-      #loader {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          z-index: 1;
-          width: 150px;
-          height: 150px;
-          margin: -75px 0 0 -75px;
-          border: 16px solid #f3f3f3;
-          border-radius: 50%;
-          border-top: 16px solid #3498db;
-          width: 120px;
-          height: 120px;
-          -webkit-animation: spin 2s linear infinite;
-          animation: spin 2s linear infinite;
-        }
 
         @-webkit-keyframes spin {
           0% { -webkit-transform: rotate(0deg); }
@@ -103,76 +72,63 @@
     </style>
 </head>
 <body>
-<header class="row expanded container">
-    <div class="small-3 columns">
-        <h1 class="title"><a href="https://docusky.org.tw/DocuSky/index.html"><img src="https://docusky.org.tw/DocuSky/images/DocuSky_A_4C.png" height="100%" width="100%"></a></h1>
-    </div>
-    <div class="small-9 columns">
-        <div class="tools">
-            <ul>
-                <li id="nav01"><a href="https://docusky.org.tw/DocuSky/ds-03.tags.html"><div class="hidden">標記與編輯</div></a></li>
-                <li id="nav02"><a href="https://docusky.org.tw/DocuSky/ds-04.convertFormat.html"><div class="hidden">轉換文本格式</div></a></li>
-                <li id="nav03"><a href="https://docusky.org.tw/DocuSky/ds-05.constructDatabase.html"><div class="hidden">建庫與重整</div></a></li>
-                <li id="nav04"><a href="#" class="selected"><div class="hidden">個人資料庫</div></a></li>
-                <li id="nav05"><a href="https://docusky.org.tw/DocuSky/ds-06.textAnalyticsTools.html"><div class="hidden">探勘與分析</div></a></li>
-                <li id="nav06"><a href="https://docusky.org.tw/DocuSky/ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
-                <li id="nav07"><a href="https://docusky.org.tw/DocuSky/ds-07.gis.html"><div class="hidden">GIS與視覺化</div></a></li>
-            </ul>
-        </div>
-    </div>
-</header>
-<div class="row expanded navigation text-right mr-0 py-2">
-    <div class="small-12 columns">
-        <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
-            <li><span class="user">個人資料庫</span></li>
-            <li><a href="https://docusky.org.tw/DocuSky/ds-01.home.html" target="_blank">返回首頁</a></li>
-            <li><a href="#" data-toggle="modal" data-target="#researchTools">研究平台</a>
-            <li><a href="https://docusky.org.tw/DocuSky/accounts/changePassword2.php">修改密碼</a></li>
-            <li><a href="https://docusky.org.tw/DocuSky/userLogout.php" onclick="Logout()" >登出系統</a></li>
-        </ul>
-    </div>
+
+<div style="position: sticky; top: 0; border-radius: 4px; z-index:999;" class='container-fluid'>
+  <div class="row expanded navigation align-items-center py-0">
+      <span class='text-left small-6' style='display: inline'>
+          <a href='https://docusky.org.tw/DocuSky'><img class='pb-1' src='https://docusky.org.tw/DocuSky/index_folder/images/DocuSky_A_WH.png' style='max-width: 300px'></a>
+      </span>
+      <span class="small-6 columns text-right" style='display: inline'>
+          <ul class="dropdown menu" data-dropdown-menu style="display: inline-block;">
+              <li><span class="user">個人資料庫</span></li>
+              <li><a href="https://docusky.org.tw/DocuSky/ds-01.home.html" target="_blank">返回首頁</a></li>
+              <li><a href="#" data-toggle="modal" data-target="#researchTools">研究平台</a>
+              <li><a href="https://docusky.org.tw/DocuSky/accounts/changePassword2.php">修改密碼</a></li>
+              <li><a href="https://docusky.org.tw/DocuSky/userLogout.php" onclick="Logout()" >登出系統</a></li>
+          </ul>
+      </span>
+  </div>
 </div>
 
-<div class="container-fluid" style="background-color:aliceblue">
+<div class="container-fluid" style="position: sticky;top: 0;border-radius: 4px;z-index:998;">
   <div class="row" style="max-width: none">
     <div class="col-md-3 col-xl-2 text-center" id="LeftControlPanel">
       <br>
-      <div style="position: -webkit-sticky;position: sticky;top: 0;border-radius: 4px;z-index:999;">
+      <div style="position: sticky; left: 0px; border-radius: 4px; z-index:999;">
         <div>
-          <br>
           <span class="form-control-plaintext text-left" style="width:auto">
-            <i class="h3 fas fa-thumbtack" onclick="pinLeftControlBTM($(this));" style="background-color: orangered; border-radius: 3px;" title="allows scolling left-panel"></i>
             <a href="./manual.pdf"><i title="manual" class="mx-2 h3 fas fa-book-medical"></i></a>
           </span>
-          <br>
-          <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
-          <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson()">Json 管理 <i class="fas fa-sync-alt"></i></button>
+          <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();$('#DocManageTable').DataTable().columns.adjust().draw();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
+          <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson();$('#JsonManageTable').DataTable().columns.adjust().draw();">Json 管理 <i class="fas fa-sync-alt"></i></button>
         </div>
       </div>
     </div>
-    <div class="col text-center" id="DocManage">
+    <div id="DocManage" class="col-md-9 col-xl-10 text-center">
       <div id="DocManageUploadTool" class="border UploadTool mt-4 pb-3">
-        <h6 style="float:right" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
+        <h6 style="float:right;" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
+        <h6 style="float: left; visibility: hidden" class="label label-default">X 隱藏<!--為了讓新增JSON能真的置中--></h6>
         <h3 class='mx-auto py-3'>新增文獻集</h3>
           <form class='mx-4'>
-            <div class='form-row'>
+            <div class='form-row' style='align-items: first baseline'>
               <span class="form-control-plaintext pr-2" style="width:auto">
                 資料庫名稱：
               </span>
               <input type="text" class='form-control' style='width: auto' id="UploadDBName" placeholder="Default">
-            </div>
-            <div class='form-row form-control-plaintext' style='width: auto'>
-              <label class="control-label" style="text-align:left" for="UploadXmlFileId">上載單份 DocuXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
-              <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file col-3">
-            </div>
-            <div class='form-row justify-content-center'>
+              <label class="control-label form-control-plaintext px-3" style="text-align:left; width: auto" for="UploadXmlFileId">上載單份 DocuXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
+              <input type="file" id='UploadXmlFileId' onchange="UploadXMLFile()" name='importedFiles[]' accept='.xml' autocomplete='off' class="form-control-file" style='width: auto'>
               <button type="button" id='uploadXmlToBuildDbId' onclick="UploadXMLBTN(event)" class="btn btn-dark">開始上傳</button>
             </div>
           </form>
       </div>
-      <div class='pb-2 pt-3'>
-        <h3>文獻集列表</h3>
-        <table id="DocManageTable" class="table table-striped table-bordered" style="width:100%">
+      <div class='pb-2 pt-4'>
+        <h3>
+            文獻集列表
+            <div class="text-right">
+              <button id="DocToolBox" onclick="showUploadTool()" title="show upload area" class="label label-default btn-info">O 顯示</button>
+            </div>
+        </h3>
+        <table id="DocManageTable" class="table table-striped table-bordered compact" cellspacing="0">
             <thead>
             <tr>
             <th>資料庫名稱</th>
@@ -188,10 +144,10 @@
         </table>
       </div>
     </div>
-    <div class="col text-center" id="JsonManage">
+    <div id="JsonManage" class="col-md-9 col-xl-10 text-center">
       <br>
       <div id="JsonManageUploadTool" class="m-2 border UploadTool">
-        <h6 style="float: right" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
+        <h6 style="float: right;" class="label label-default" onclick="hideUploadTool()">X 隱藏</h6>
         <h6 style="float: left; visibility: hidden" class="label label-default">X 隱藏<!--為了讓新增JSON能真的置中--></h6>
         <h3 class='mx-auto py-3'>新增 Json 資料</h3>
         <form>
@@ -215,8 +171,13 @@
       </div>
       <div class="pb-2 pt-3">
         <br>
-        <h3>Json 資料列表</h3>
-        <table id="JsonManageTable" class="table table-striped table-bordered" style="width:100%">
+        <h3>
+          Json 資料列表
+          <div class="text-right">
+            <button id="JsonToolBox" onclick="showUploadTool()" title="show upload area" class="label label-default btn-info">O 顯示</button>
+          </div>
+        </h3>
+        <table id="JsonManageTable" class="table table-striped table-bordered compact" cellspacing="0">
             <thead>
             <tr>
             <th>種類</th>
@@ -347,8 +308,7 @@
 
 <div>
   <button onclick="goToTop()" id="TOPBTN" title="go to top"><h5><i class="fas fa-angle-up"></i></h5></button>
-  <button onclick="$('#LeftControlPanel').toggle()" id="HideLeftControlPanel" title="show/hide left panel"><h5><i class="fas fa-columns"></i></h5></button>
-  <button onclick="hideUploadTool()" id="HideUploadTool" title="show/hide upload area"><h5><i class="fas fa-toolbox"></i></h5></button>
+  <button onclick="hideLeftControlPanelHandle()" id="HideLeftControlPanel" title="show/hide left panel"><h5><i class="fas fa-columns"></i></h5></button>
 </div>
 </body>
 </html>
