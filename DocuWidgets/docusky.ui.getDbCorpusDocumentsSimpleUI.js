@@ -21,6 +21,7 @@
  * 0.10 (Oct 06 2018)  add a showPublicDbLink to login container for accessing open databases
  * 0.11 (Oct 15 2018)  add some functions to support future providers API
  * 0.12 (Dec 02 2018)  add replaceDocument(), corpus list resizable()
+ * 0.13 (Mar 23 2019)  add url parameter 'includeFriendDb' and setDbListOption()
  *
  * @copyright
  * Copyright (C) 2016-2018 Hsieh-Chang Tu
@@ -37,7 +38,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    var me = this;
 
    this.package = 'docusky.ui.getDbCorpusDocumentsSimpleUI.js';    // 主要目的：取得給定 db, corpus 的文件
-   this.version = 0.12;                             // 2018-12-02
+   this.version = 0.13;                             // 2019-03-23
    this.idPrefix = 'CorpusDoc_';                    // 2016-08-13
 
    this.showPublicDbLink = true;                    // 2018-09-30, 2018-10-15
@@ -61,6 +62,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.callerCallbackParameters = null;            // 儲存回呼函式的傳入參數
    this.initialized = false;
    this.target = 'USER';                            // 'target', 'db', 'corpus' are input parameters of urlGetQueryResultDocumentsJson
+   this.includeFriendDb = false;                    // 2019-03-23: default false for backward-compatibility
    this.db = '';
    this.corpus = '';
    this.query = '';                                 // 儲存最後一個 query
@@ -98,24 +100,24 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    // =================================
 
    var init = function() {
-      //var scriptPath = me.utility.getScriptPath();
-      //me.urlScriptPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
-      // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlScriptPath = "https://docusky.org.tw/DocuSky";
-      me.urlWebApiPath = me.urlScriptPath + '/WebApi';
-      //let pathParts = me.scriptPath.match(/(http[s]?|file):\/\/([^\/]+)\/((.+)\/)?/);
-
       let scheme = location.protocol.substr(0, location.protocol.length-1);
-      let pos = me.urlWebApiPath.split('/', 3).join('/').length;    // find the 3rd occurrence of '/'
+      if (scheme == 'file') me.urlScriptPath = "https://docusky.org.tw/docusky";
+      else me.urlScriptPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy'));
+      me.urlWebApiPath = me.urlScriptPath + '/WebApi';
+      let pathParts = me.urlScriptPath.match(/(http[s]?):\/\/([^\/]+)\/(.*)/);
+      let pos = me.urlWebApiPath.split('/', 3).join('/').length;
+      let [urlHost, urlPort] = pathParts[2].split(':');
       let urlPath = me.urlWebApiPath.substr(pos);
+      if (urlPort === undefined) urlPort = (scheme == 'http') ? '80' : '443';
       let curProvider = { title: 'Current',
                           type: 'api',
-                          urlScheme: 'https',
-                          urlHost: 'docusky.org.tw',
-                          urlPort: '443',
+                          urlScheme: scheme,
+                          urlHost: urlHost,
+                          urlPort: urlPort,
                           urlPath: urlPath,
                           description: 'Current'};
       me.providerList.push(curProvider);
+      //alert(JSON.stringify(curProvider));
       setUrlApiPath(me, curProvider);
 
       me.uniqueId = me.utility.uniqueId();
@@ -134,7 +136,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var showProviderListId = me.idPrefix + "showProviderList" + me.uniqueId;
 
       var myVer = me.package + " - Ver " + me.version;
-      var myProvider = (me.enableGetProviderList) ? "&nbsp;P&nbsp;" : "";
+      var myProvider = (me.enableGetProviderList) ? "&nbsp;P&nbsp;" : "";     // note: will show this option when there are more than 1 providers
       var s = "<div id='" + loginContainerId + "' class='dsw-container'>"
 			   + "<div id='" + loginContainerOverlayId + "' class='dsw-overlay'></div>"
             + "<div id='" + loginContainerId + "_TitleBar' class='dsw-titleBar'>"
@@ -270,7 +272,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       // 2018-10-12: set provider list
       if (me.enableGetProviderList) {
          // location.procotol contains ':'
-         let url = me.urlGetProviderListJson + "?scheme=" + ((scheme == 'file') ? "http,https" : scheme);
+         let url = me.urlGetProviderListJson + "?scheme=http,https";
          $.ajax({ url: url, method: "GET"})
             .done(function(retObj) {
                if (retObj.code == 0) {
@@ -297,17 +299,17 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                //setUrlApiPath(me, me.providerList[1]);     // test
             })
             .fail(function(jqXHR, textStatus) {
-               console.error("Connection error");
-               if(typeof me.Error === "function"){
-                  me.Error("Connection error");
+              console.error("Connection error");
+              if(typeof me.Error === "function"){
+                 me.Error("Connection error");
+              }
+              else{
+               alert("Connection error");
+               let retry = function(){
+                 docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
                }
-               else{
-                alert("Connection error");
-                let retry = function(){
-                  docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
-                }
-                setTimeout(retry,3000);
-               }
+               setTimeout(retry,3000);
+              }
             })
             .always(function() {
                // 2018-10-14
@@ -323,7 +325,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    var setUrlApiPath = function(obj, provider) {                // 2018-10-12
       if (provider.urlScheme == 'https') {
-         var port = (provider.urlPort != "443") ? (":" + provider.urlPort) : "";
+         var port = (provider.urlPort != "443") ? (":" + provider.urlPort) : ":443";
       }
       else if (provider.urlScheme == 'file') {
          provider.urlScheme = 'https';
@@ -417,15 +419,17 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       var dbCorpusListContainerOverlayId = me.idPrefix + "dbCorpusListContainerOverlay" + me.uniqueId;
       var dbCorpusListContainerId = me.idPrefix + "dbCorpusListContainer" + me.uniqueId;
 
-      var target = param.target;
+      var displayTarget = param.target;
       var titleId = dbCorpusListContainerId + "_Title";
-      $("#" + titleId).html(target + " corpus list");     // 2018-10-02, 2018-10-13
+      $("#" + titleId).html(displayTarget + " corpus list");     // 2018-10-02, 2018-10-13
 
       var invokeFunName = param.invokeFunName;
 
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get(me.urlGetDbCorpusListJson + '?target=' + target, function(data) {
+      let friendDb = (me.includeFriendDb) ? '&includeFriendDb=1' : '';
+      let url = me.urlGetDbCorpusListJson + '?' + 'target=' + displayTarget + friendDb;
+      $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {          // success
             //me.utility.displayJson(data);
@@ -434,7 +438,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             var contentTableId = me.idPrefix + "dbCorpusContentTable" + me.uniqueId;
             var s = "<table id='" + contentTableId + "' class='dsw-tableContentList'>";
             for (var i=0; i<dbCorpusList.length; i++) {
-               var target = dbCorpusList[i]['target'];
+               let target = dbCorpusList[i]['target'];
+               let ownerUsername = dbCorpusList[i]['ownerUsername'];     // 2019-03-23
+               var username = dbCorpusList[i]['username'];               // 2019-03-23
                var db = dbCorpusList[i]['db'];
                var corpus = dbCorpusList[i]['corpus'];
                var page = me.page; // 2018-07-03 wayne
@@ -442,19 +448,23 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                var channelKey = me.channelKey;         // 2018-09-14
                var fieldsOnly = me.fieldsOnly;         // 2018-09-14
                var num = i + 1;
-               var urlParam = "target=" + target + "&db=" + db + "&corpus=" + corpus + "&query=.all&page=" + page + "&pageSize=" + pageSize
+               var urlParam = "target=" + target
+                            + "&ownerUsername=" + ownerUsername
+                            + "&db=" + db + "&corpus=" + corpus + "&query=.all&page=" + page + "&pageSize=" + pageSize
                             + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');
-               s += "<tr class='dsw-tr-contentlist'><td class='dsw-td-contentlist dsw-td-contentlist-num'>" + num + ".</td><td class='dsw-td-contentlist dsw-td-contentlist-dbname'>" + db + "</td><td class='dsw-td-contentlist dsw-td-contentlist-corpusname'>" + corpus + "</td><td class='dsw-td-contentlist dsw-td-contentlist-load'>"
+               s += "<tr class='dsw-tr-contentlist'><td class='dsw-td-contentlist dsw-td-contentlist-num'>" + num + ".</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-dbname'>" + (username == ownerUsername ? "" : ownerUsername + ": ") + db + "</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-corpusname'>" + corpus + "</td><td class='dsw-td-contentlist dsw-td-contentlist-load'>"
                   + "<nobr><a class='loadDbCorpusDocument' href='dummy?" + urlParam + "'>載入</a></nobr>"       // 2018-09-04: add <nobr>
                   + "</td></tr>";
             }
             if (me.showPublicDbLink) {               // 2018-09-30
-               s += (target == 'OPEN')
+               s += (displayTarget == 'OPEN')
                   ? "<tr><td colspan='3' align='center'><span class='dsw-listPersonalCorpuses'>Show Personal Databases</span></td></tr>"
                   : "<tr><td colspan='3' align='center'><span class='dsw-listOpenCorpuses'>Show Public Databases</span></td></tr>";
             }
             s += "</table>";
-            me.target = target;                        // set target to object scope
+            me.target = displayTarget;               // set target to object scope
 
             //var w = Math.min($("#" + contentTableId).width(), 600);
             let w = me.uiState[dbCorpusListContainerId] && me.uiState[dbCorpusListContainerId].size
@@ -607,7 +617,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                     'query': '.all',
                     'page': 1,
                     'pageSize': me.pageSize };
-      me.getQueryResultDocuments(param, evt, succFunc,failFunc);
+      me.getQueryResultDocuments(param, evt, succFunc, failFunc);
    };
 
    // 2016-08-19: pykenny adds "message" to the parameter list
@@ -657,11 +667,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    };
 
    me.getQueryResultDocuments = function(param, evt, succFunc, failFunc) {
-   //original me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters)
+  //original me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters)
       var my = null;
 
       if (typeof(param) !== 'object') param = {};
       var target = ('target' in param) ? param.target : 'USER';
+      var ownerUsername = ('ownerUsername') ? param.ownerUsername : false;   // 2019-03-23
       var db = ('db' in param) ? param.db : '';
       var corpus = ('corpus' in param) ? param.corpus : '';
       var query = ('query' in param) ? param.query : '.all';
@@ -679,7 +690,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else my = me;
       my.callerEvent = evt;
       my.callerCallback = succFunc;
-      //my.callerCallbackParameters = successFuncParameters;
+    //my.callerCallbackParameters = successFuncParameters;
       my.target = target.toUpperCase();
       if (my.target != 'OPEN') my.target = 'USER';
       my.db = db;
@@ -730,6 +741,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: { withCredentials: true } });
       var url = me.urlGetQueryResultDocumentsJson + "?target=" + target
+              + (ownerUsername ? ("&ownerUsername=" + ownerUsername) : "")
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
               + "&page=" + page + "&pageSize=" + pageSize
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : "")    // 2018-09-14
@@ -753,7 +765,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
             $("#" + dbCorpusListContainerId).fadeOut();
-            //console.log(data);
             var retChannelKey = data.message.channelKey;
             if (!retChannelKey) {
                // simple case: copy to object "global" area
@@ -1012,6 +1023,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, db, corpus, docInfo);
    };
 
+   me.setDbListOption = function(param) {                    // 2019-03-23
+     if (param.includeFriendDb) me.includeFriendDb = param.includeFriendDb;
+   }
+
    var updateOrReplaceDoc = function(actionUrl, db, corpus, docInfo) {
       if (!('docFilename' in docInfo)) {
          alert("Error: requires db, corpus, docFilename to update document content");
@@ -1048,8 +1063,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       });
    };
 
-   //// 動態載入 utility functions
-   //me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   // 動態載入 utility functions
+   // 注意： 這部分的程式很可能還有狀況。由於利用 jQuery 動態載入 utility functions，
+   //        call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
+   //alert(new Error().stack);
+   me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   //alert(me.scriptPath);
    //let pat = "((http[s]?):\/\/([^\/]+)\/((.+)\/)?)(" + me.package + "):";
    //me.scriptPath = new Error().stack.match(pat)[1];
    //alert(me.scriptPath);
@@ -1080,7 +1099,7 @@ var docuskyWidgetUtilityFunctions = {
    //   var msie = ua.indexOf("MSIE ");
    //   if (msie) {
    //      // use fixed url
-   //      var pathParts = "http://docusky.digital.ntu.edu.tw/docusky/js.ui/docusky.widget.utilityFunctions.js";
+   //      var pathParts = "http://docusky.org.tw/docusky/js.ui/docusky.widget.utilityFunctions.js";
    //   }
    //   else {
    //      var errorStack = new Error().stack;
