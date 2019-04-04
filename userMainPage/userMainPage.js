@@ -91,25 +91,25 @@ function hideLeftControlPanelHandle(){
 
 function hideUploadTool(){
   if($("#DocManage").is(":visible")){
-    $("#DocManageUploadTool").hide();
-    $("#DocToolBox").show();
+    $("#DocManageUploadTool").hide(1000);
+    $("#DocToolBox").show(1000);
   }
 
   if($("#JsonManage").is(":visible")){
-    $("#JsonManageUploadTool").hide();
-    $("#JsonToolBox").show();
+    $("#JsonManageUploadTool").hide(1000);
+    $("#JsonToolBox").show(1000);
   }
 }
 
 function showUploadTool(){
   if($("#DocManage").is(":visible")){
-    $("#DocManageUploadTool").show();
-    $("#DocToolBox").hide();
+    $("#DocManageUploadTool").show(1000);
+    $("#DocToolBox").hide(1000);
   }
 
   if($("#JsonManage").is(":visible")){
-    $("#JsonManageUploadTool").show();
-    $("#JsonToolBox").hide();
+    $("#JsonManageUploadTool").show(1000);
+    $("#JsonToolBox").hide(1000);
   }
 
 }
