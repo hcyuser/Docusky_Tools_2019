@@ -50,6 +50,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.urlLogin = null;
    me.urlLogout = null;
    me.displayname = '';
+   me.username = '';
    me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
@@ -101,7 +102,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       me.urlLogout = me.urlWebApiPath + '/userLogoutJson.php';
       me.urlUserMain = me.urlHostPath + '/docuTools/userMain/';
       me.displayname = '';
-
+      me.username = '';
       me.uniqueId = me.utility.uniqueId();
 
       // login container
@@ -722,8 +723,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
             }
 
-            //2019-03-08 inset username on dbListContainerId
-            //Owning to the init() limit, it is needed to insert username here.
+            //2019-03-08 inset displayname on dbListContainerId
+            //Owning to the init() limit, it is needed to insert displayname here.
             if(!me.displayname){
               me.getUserProfile(null,function(data){
                 me.displayname = data.display_name;
