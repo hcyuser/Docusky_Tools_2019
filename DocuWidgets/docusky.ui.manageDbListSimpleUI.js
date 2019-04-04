@@ -725,13 +725,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
             //2019-03-08 inset displayname on dbListContainerId
             //Owning to the init() limit, it is needed to insert displayname here.
-            if(!me.displayname){
-              me.getUserProfile(null,function(data){
-                me.displayname = data.display_name;
-                var spanDisplaynameId = me.idPrefix + "spanDisplayname" + me.uniqueId;
-                $("#"+spanDisplaynameId).html(me.displayname);
-              });
-            }
+            me.getUserProfile(null,function(data){
+              me.displayname = data.display_name;
+              var spanDisplaynameId = me.idPrefix + "spanDisplayname" + me.uniqueId;
+              $("#"+spanDisplaynameId).html(me.displayname);
+            });
+
 
             // 2017-07-22
             if (typeof me.callerCallback === "function") {
