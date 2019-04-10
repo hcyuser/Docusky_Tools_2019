@@ -21,7 +21,9 @@
  * 0.11 (Feb 19 2019) add renameDbTitle, getUserProfile function (modify widgetEvents so that the callback func
  *                    has evt in the first arg and this in the second arg)
  * 0.12 (April 01 2019) add error handling and me.Error for the most functions and
-                        modify the parameter of uploadMultipart()
+ *                      modify the parameter of uploadMultipart()
+ * 0.13 (April 04 2019) add functions for user friendship and accessible dbs
+ *
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
@@ -37,11 +39,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    var me = this;                           // stores object reference
 
    me.package = 'docusky.ui.manageDbListSimpleUI.js';      // 主要目的：取得給定 db, corpus 的文件
-   me.version = 0.10;
+   me.version = 0.13;
    me.idPrefix = 'DbList_';                 // 2016-08-13
 
    me.utility = null;
-   me.protocol = null;                      // 'http',
+   me.protocol = null;                      // 'http', 'https'
    me.urlHostPath = null;
    me.urlWebApiPath = null;
    me.urlGetDbListJson = null;
@@ -104,6 +106,14 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       me.displayname = '';
       me.username = '';
       me.uniqueId = me.utility.uniqueId();
+
+      // 2019-04-04: for user friendship and accessible dbs
+      me.urlReplaceUserFriendshipJson = me.urlWebApiPath + '/replaceUserFriendshipJson.php';
+      me.urlReplaceUserFriendAccessibleDbJson = me.urlWebApiPath + '/replaceUserFriendAccessibleDbJson.php';
+      me.urlDeleteUserFriendshipJson = me.urlWebApiPath + '/deleteUserFriendshipJson.php';
+      me.urlDeleteUserFriendAccessibleDbJson = me.urlWebApiPath + '/deleteUserFriendAccessibleDbJson.php';
+      me.urlGetUserFriendshipJson = me.urlWebApiPath + '/getUserFriendshipJson.php';
+      me.urlGetUserFriendAccessibleDbJson = me.urlWebApiPath + '/getUserFriendAccessibleDbJson.php';
 
       // login container
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
@@ -847,6 +857,162 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
 
+   // -------------------------------------------------
+   // 2019-04-04
+   //me.manageUserFriendAccessibleDb = function(evt, successFunc, failFunc) {
+   //   // 將 user friendship and user friend accessible db 功能合在一起並提供簡單介面
+   //   // TODO
+   //   alert("Sorry, this function is not implemented yet");
+   //}
+   
+   me.getUserFriendship = function(param, succFunc, failFunc) {
+      var url = me.urlGetUserFriendshipJson;         // url param: friendGenre, friendTags
+      let friendGenre = param.friendGenre || false;
+      let friendTags = param.friendTags || false;
+      let data = "";
+      data += (friendGenre) ? "friendGenre=" + encodeURIComponent(friendGenre) : "";
+      data += (friendTags) ? ((data!="") ? "&" : "") + "friendTags=" + encodeURIComponent(friendTags) : "";
+      $.ajax({
+         method: 'GET',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("GetUserFriendship:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("getUserFriendship: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to get user friendship");
+      });
+   }
+
+   me.getUserFriendAccessibleDb = function(param, succFunc, failFunc) {
+      var url = me.urlGetUserFriendAccessibleDbJson;
+      let friendUsernames = param.friendUsernames || false;    // friendUsernames: username1;username2;...
+      let data = "";
+      data += (friendUsernames) ? "friendUsernames=" + encodeURIComponent(friendUsernames) : "";
+      $.ajax({
+         method: 'GET',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("getUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("getUserFriendAccessibleDb: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to get user friend accessible db");
+      });
+   }
+   
+   me.replaceUserFriendship = function(param, succFunc, failFunc) {
+      var url = me.urlReplaceUserFriendshipJson;
+      let friendUsernames = param.friendUsernames || false;    // friendUsernames: username1;username2;...
+      let friendGenre = param.friendGenre || false;            // all the above friends set to this friendGenre value
+      let friendTags = param.friendTags || false;              // all the above friends set to this friendTags value
+      let data = "";
+      data += (friendUsernames) ? "friendUsernames=" + encodeURIComponent(friendUsernames) : "";
+      data += (friendGenre) ? ((data!="") ? "&" : "") + "friendGenre=" + encodeURIComponent(friendGenre) : "";
+      data += (friendTags) ? ((data!="") ? "&" : "") + "friendTags=" + encodeURIComponent(friendTags) : "";
+      $.ajax({
+         method: 'GET',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("replaceUserFriendship:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("replaceUserFriendship: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to replace user friendship");
+      });
+   }
+
+   me.replaceUserFriendAccessibleDb = function(param, succFunc, failFunc) {
+      var url = me.urlReplaceUserFriendAccessibleDbJson;
+      let friendAccessibleDb = param.friendAccessibleDb;
+      let data = "friendAccessibleDb=" + JSON.stringify(friendAccessibleDb);
+      $.ajax({
+         method: 'POST',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("replaceUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("replaceUserFriendAccessibleDb: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to replace user friend accessible db");
+      });
+   }
+   
+   me.deleteUserFriendship = function(param, succFunc, failFunc) {
+      var url = me.urlDeleteUserFriendshipJson;
+      let friendUsernames = param.friendUsernames || false;    // friendUsernames: username1;username2;...
+      let data = "";
+      data += (friendUsernames) ? "friendUsernames=" + encodeURIComponent(friendUsernames) : "";
+      $.ajax({
+         method: 'POST',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("deleteUserFriendship:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("deleteUserFriendship: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to delete user friendship");
+      });
+   }
+
+   me.deleteUserFriendAccessibleDb = function(param, succFunc, failFunc) {
+      var url = me.urlDeleteUserFriendAccessibleDbJson;
+      let friendAccessibleDb = param.friendAccessibleDb;
+      let data = "friendAccessibleDb=" + JSON.stringify(friendAccessibleDb);
+      $.ajax({
+         method: 'POST',
+         url: url,
+         data: data
+      }).done(function(data) {
+         if (data.code == 0) {
+            if (typeof succFunc === "function") succFunc(data.message);
+            else alert("deleteUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
+         }
+         else {
+            if (typeof failFunc === "function") failFunc(data);
+            else alert("deleteUserFriendAccessibleDb: " + data.message);
+         }
+      }).fail(function() {
+         if (typeof failFunc === 'function') failFunc();
+         else alert("Failed to delete user friend accessible db");
+      });
+   }
+   
    // for multipart file upload
    var readFile = function(file) {
       var loader = new FileReader();
