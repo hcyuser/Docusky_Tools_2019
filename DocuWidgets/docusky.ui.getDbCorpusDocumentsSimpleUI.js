@@ -22,7 +22,8 @@
  * 0.11 (Oct 15 2018)  add some functions to support future providers API
  * 0.12 (Dec 02 2018)  add replaceDocument(), corpus list resizable()
  * 0.13 (Mar 23 2019)  add url parameter 'includeFriendDb' and setDbListOption()
- *
+ * 0.14 (April 11 2019) add error handling and me.Error for the most functions and
+ *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
  * @copyright
  * Copyright (C) 2016-2018 Hsieh-Chang Tu
  *
@@ -59,7 +60,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    this.callerEvent = null;
    this.callerCallback = null;                      // 儲存成功執行後所需呼叫的函式
-   this.callerCallbackParameters = null;            // 儲存回呼函式的傳入參數
+   //this.callerCallbackParameters = null;            // 儲存回呼函式的傳入參數
    this.initialized = false;
    this.target = 'USER';                            // 'target', 'db', 'corpus' are input parameters of urlGetQueryResultDocumentsJson
    this.includeFriendDb = false;                    // 2019-03-23: default false for backward-compatibility
@@ -74,7 +75,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    // login action
    this.loginInvokeFun = null;
-   this.loginInvokeFunParameters = null;
+   //this.loginInvokeFunParameters = null;
 
    // returns
    this.totalFound = 0;
@@ -244,9 +245,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             else {
                alert(jsonObj.code + ': ' + jsonObj.message);
             }
-			$("#" + dbCorpusListContainerOverlayId).show();
-			$("#" + dbCorpusListContainerId).fadeOut();
-         }, 'json');
+      			$("#" + dbCorpusListContainerOverlayId).show();
+      			$("#" + dbCorpusListContainerId).fadeOut();
+         }, 'json')
+         .fail(function (jqXHR, textStatus, errorThrown){
+                console.error("Connection Error");
+                alert("Connection Error");
+          });
 		   // Clear out obtained document list
 		   me.docList = [];
       });
@@ -287,9 +292,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   });
                }
                else{
-                 console.error("Server error");
+                 console.error("Server Error");
                  if(typeof me.Error === "function"){
-                   me.Error("Server error");
+                   me.Error("Server Error");
                  }
                  else {
                    alert("Error: " + retObj.message);
@@ -299,12 +304,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                //setUrlApiPath(me, me.providerList[1]);     // test
             })
             .fail(function(jqXHR, textStatus) {
-              console.error("Connection error");
+              console.error("Connection Error");
               if(typeof me.Error === "function"){
-                 me.Error("Connection error");
+                 me.Error("Connection Error");
               }
               else{
-               alert("Connection error");
+               alert("Connection Error");
                let retry = function(){
                  docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
                }
@@ -367,8 +372,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             $("#" + loginContainerOverlayId).show();
             $("#" + loginContainerId).fadeOut();
             // 登入後，就自動載入第一頁的內容... 日後該改為可由工具自行設定
-            if (typeof me.callerCallback === "function" && typeof me.loginInvokeFun === "function") {
-               me.loginInvokeFun.apply(me, me.loginInvokeFunParameters);
+            if (typeof me.loginInvokeFun === "function") {
+               me.loginInvokeFun();
             }
             else {
                me.target = 'USER';              // 2018-10-02
@@ -388,9 +393,50 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
          else if (jsonObj.code == 101) ;   // alert("Login fails: requires login");       // Requires login
          else {
-            $("#" + loginMessageId).html(jsonObj.code + ': ' + jsonObj.message);
+           console.error("Login Error");
+           if(typeof me.Error === "function"){
+             me.Error("Login Error");
+           }
+           else {
+              $("#" + loginMessageId).html(jsonObj.code + ': ' + jsonObj.message);    // jsonObj.code == 101 ==> Requires login
+           }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+         if(typeof me.Error === "function"){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
+         }
+         else{
+
+          let loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
+          let loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
+          $("#" + loginContainerId).show();
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            $("#" + loginMessageId).html("Server Error");
+          }
+          else{
+            $("#" + loginMessageId).html("Connection Error");
+            let retry = function(){
+              login(username, password);
+            }
+            setTimeout(retry,3000);
+          }
+
+
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
 
@@ -400,10 +446,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else alert("Argument of addExtraFunctions() must be a function");
    };
 
-   me.setLoginAction = function(loginInvokeFun, loginInvokeFunParameters) {
+   /*me.setLoginAction = function(loginInvokeFun, loginInvokeFunParameters) {
       me.loginInvokeFun = loginInvokeFun;
       me.loginInvokeFunParameters = loginInvokeFunParameters;
-   }
+   }*/
 
    var displayDbCorpusList = function(param, evt) {          // list all db/corpus pairs (not the corpuses under a given db)
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
@@ -516,10 +562,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   me.getQueryResultDocuments(param, e, me.callerCallback);     // 2018-09-15
                   break;
                case 'getQueryPostClassification':
-                  me.getQueryPostClassification(param, me.callerEvent, me.callerCallback, me.callerCallbackParameters);
+                  me.getQueryPostClassification(param, me.callerEvent, me.callerCallback);
                   break;
                case 'getQueryTagAnalysis':
-                  me.getQueryTagAnalysis(param, me.callerEvent, me.callerCallback, me.callerCallbackParameters);
+                  me.getQueryTagAnalysis(param, me.callerEvent, me.callerCallback);
                   break;
                default:
                   // unsupported function
@@ -554,10 +600,47 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                $("#" + loginContainerId).show();
             }
             else {
-               alert("Error: " + data.code + "\n" + data.message);
+
+               console.error("Server Error");
+               if(typeof me.Error === "function"){
+                 me.Error("Server Error");
+               }
+               else {
+                 alert("Error: " + data.code + "\n" + data.message);
+               }
+
             }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
+         if(typeof me.Error === "function"){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
+         }
+         else{
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+           }
+           else{
+             alert("Connection Error");
+             let retry = function(){
+               displayDbCorpusList(param, evt);
+             }
+             setTimeout(retry,3000);
+           }
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
 
@@ -623,9 +706,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    // 2016-08-19: pykenny adds "message" to the parameter list
    // 2016-08-30(pykenny): fix problem when argument 'message' is not given
    // note: me function does not support "callback parameters" (for backward compatibility)
-   me.getDbCorpusDocumentsGivenPageAndSize = function(target, db, corpus, page, pageSize, evt, successFunc, message) {
-      me.pageSize = pageSize;
-
+   me.getDbCorpusDocumentsGivenPageAndSize = function(target, db, corpus, page, pageSize, evt, succFunc, message, failFunc) {
+     me.pageSize = pageSize;
 	   var msg = "";
 	   // reset links got by init(): urlGetDbCorpusListJson.php
       $(".loadDbCorpusDocument").each(function(idx){
@@ -634,7 +716,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $(this).attr('href', href);
       });
 
-	   if (typeof message === "undefined" || !message){
+	   if (typeof message === "undefined" || !message || typeof message === "function"){
 		   msg = "page: " + page;
 	   } else {
 		   msg = message.toString();
@@ -648,7 +730,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                     'pageSize': pageSize,
                     'message': msg};
 
-      me.getQueryResultDocuments(param, evt, successFunc);
+      if(failFunc && typeof failFunc === "function"){
+        me.getQueryResultDocuments(param, evt, succFunc, failFunc);
+      }
+      else{
+        me.getQueryResultDocuments(param, evt, succFunc);
+      }
+
    };
 
    me.hideLoadingIcon = function(bool) {
@@ -667,7 +755,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    };
 
    me.getQueryResultDocuments = function(param, evt, succFunc, failFunc) {
-  //original me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters)
+   //original me.getQueryResultDocuments = function(param, evt, successFunc, successFuncParameters)
       var my = null;
 
       if (typeof(param) !== 'object') param = {};
@@ -689,7 +777,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
       else my = me;
       my.callerEvent = evt;
-      my.callerCallback = succFunc;
+      if (typeof succFunc === "function") my.callerCallback = succFunc;
     //my.callerCallbackParameters = successFuncParameters;
       my.target = target.toUpperCase();
       if (my.target != 'OPEN') my.target = 'USER';
@@ -760,7 +848,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
       //alert(url);
 
-	   $.ajaxSetup({xhrFields: {withCredentials: true}});
+	   $.ajaxSetup({xhrFields: {withCredentials: true},timeout: 30000});
       $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
@@ -778,6 +866,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                me.spotlights = data.message.spotlights;            // 2016-12-18
                me.fieldsInly = (data.message.fieldsOnly !== undefined)
                              ? data.message.fieldsOnly : '';       // 2018-09-15
+
                if (typeof me.callerCallback === "function") me.callerCallback();
             }
             else {
@@ -795,7 +884,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                ch.fieldsInly  = (data.message.fieldsOnly !== undefined)
                               ? data.message.fieldsOnly : '';      // 2018-09-15
                if (typeof ch.callerCallback === "function") {
-                  ch.callerCallback(retChannelKey, ch.callerCallbackParameters);
+                  ch.callerCallback(retChannelKey);
                }
             }
 
@@ -820,7 +909,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
              failFunc();
            }
            else if(typeof me.Error === "function"){
-             me.Error("Server error");
+             me.Error("Server Error");
            }
            else {
                 $("#" + dbCorpusListContainerId).fadeOut();
@@ -830,17 +919,36 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-         console.error("Connection error");
+
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+
          if(evt || me.displayLoadingIcon){
-           $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-           $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
-           $("#"+loadingContainerId).show();
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+             $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+             $("#"+loadingContainerId).show();
+
+           }else{
+             $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+             $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+             $("#"+loadingContainerId).show();
+           }
          }
          if (typeof failFunc === "function") {
             failFunc();
          }
          else if(typeof me.Error === "function"){
-            me.Error("Connection error");
+             if(jqXHR.status=="404" || jqXHR.status=="403"){
+               me.Error("Server Error");
+             }
+             else{
+               me.Error("Connection Error");
+             }
          }
          else{
           let retry = function(){
@@ -852,7 +960,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       });
    };
 
-   me.getQueryPostClassification = function(param, evt, successFunc, successFuncParameters) {
+   me.getQueryPostClassification = function(param, evt, succFunc, failFunc) {
+   //original me.getQueryPostClassification = function(param, evt, successFunc, successFuncParameters)
       if (typeof(param) != 'object') param = {};
       target = ('target' in param) ? param.target : 'USER';
       db = ('db' in param) ? param.db : '';
@@ -864,8 +973,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       message = ('message' in param) ? param.message : ('page: ' + page);
 
       me.callerEvent = evt;
-      me.callerCallback = successFunc;
-      me.callerCallbackParameters = successFuncParameters;
+      if (typeof succFunc === "function") me.callerCallback = succFunc;
+      //me.callerCallbackParameters = successFuncParameters;
       me.target = target.toUpperCase();
       if (me.target != 'OPEN') me.target = 'USER';
       me.db = db;
@@ -911,7 +1020,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             $("#" + dbCorpusListContainerId).fadeOut();
             me.postClassification = data.message.postClassification;
             if (typeof me.callerCallback === "function") {
-               me.callerCallback(me.callerCallbackParameters);
+               me.callerCallback();
             }
          }
          else if (data.code == 101) {             // requires login
@@ -927,14 +1036,68 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             displayDbCorpusList(param, me.callerEvent);
          }
          else {
-			   $("#" + dbCorpusListContainerId).fadeOut();
-            alert("Error: " + data.code + "\n" + data.message);
+           console.error("Server Error");
+           if (typeof failFunc === "function"){
+             failFunc();
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server Error");
+           }
+           else {
+             $("#" + dbCorpusListContainerId).fadeOut();
+             alert("Error: " + data.code + "\n" + data.message);
+           }
+
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
+        if(evt || me.displayLoadingIcon){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+            $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+            $("#"+loadingContainerId).show();
+          }else{
+            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+            $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+            $("#"+loadingContainerId).show();
+          }
+        }
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
+         }
+         else{
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+           }
+           else{
+             alert("Connection Error");
+             let retry = function(){
+               me.getQueryPostClassification(param, evt, succFunc, failFunc);
+             }
+             setTimeout(retry,3000);
+           }
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
 
-   me.getQueryTagAnalysis = function(param, evt, successFunc, successFuncParameters) {
+   me.getQueryTagAnalysis = function(param, evt, succFunc, failFunc) {
+   //original me.getQueryTagAnalysis = function(param, evt, successFunc, successFuncParameters)
       if (typeof(param) != 'object') param = {};
       target = ('target' in param) ? param.target : 'USER';
       db = ('db' in param) ? param.db : '';
@@ -946,8 +1109,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       message = ('message' in param) ? param.message : ('page: ' + page);
 
       me.callerEvent = evt;
-      me.callerCallback = successFunc;
-      me.callerCallbackParameters = successFuncParameters;
+      if (typeof succFunc === "function") me.callerCallback = succFunc;
+      //me.callerCallbackParameters = successFuncParameters;
       me.target = target.toUpperCase();
       if (me.target != 'OPEN') me.target = 'USER';
       me.db = db;
@@ -992,7 +1155,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             $("#" + dbCorpusListContainerId).fadeOut();
             me.tagAnalysis = data.message.tagAnalysis;
             if (typeof me.callerCallback === "function") {
-               me.callerCallback(me.callerCallbackParameters);
+               me.callerCallback();
             }
          }
          else if (data.code == 101) {             // requires login
@@ -1008,26 +1171,81 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             displayDbCorpusList(param, me.callerEvent);
          }
          else {
-			   $("#" + dbCorpusListContainerId).fadeOut();
-            alert("Error: " + data.code + "\n" + data.message);
+           console.error("Server Error");
+           if (typeof failFunc === "function"){
+             failFunc();
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server Error");
+           }
+           else {
+             $("#" + dbCorpusListContainerId).fadeOut();
+             alert("Error: " + data.code + "\n" + data.message);
+           }
+
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
+
+        if(evt || me.displayLoadingIcon){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+            $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+            $("#"+loadingContainerId).show();
+          }else{
+            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+            $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+            $("#"+loadingContainerId).show();
+          }
+        }
+
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
+         }
+         else{
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+           }
+           else{
+             alert("Connection Error");
+             let retry = function(){
+               me.getQueryTagAnalysis(param, evt, succFunc, failFunc);
+             }
+             setTimeout(retry,3000);
+           }
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
 
-   me.updateDocument = function(db, corpus, docInfo) {
-      updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, db, corpus, docInfo);
+   me.updateDocument = function(db, corpus, docInfo, succFunc, failFunc) {
+      updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, db, corpus, docInfo, succFunc, failFunc);
    };
 
-   me.replaceDocument = function(db, corpus, docInfo) {      // 2018-10-15
-      updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, db, corpus, docInfo);
+   me.replaceDocument = function(db, corpus, docInfo, succFunc, failFunc) {      // 2018-10-15
+      updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, db, corpus, docInfo, succFunc, failFunc);
    };
 
    me.setDbListOption = function(param) {                    // 2019-03-23
      if (param.includeFriendDb) me.includeFriendDb = param.includeFriendDb;
    }
 
-   var updateOrReplaceDoc = function(actionUrl, db, corpus, docInfo) {
+   var updateOrReplaceDoc = function(actionUrl, db, corpus, docInfo, succFunc, failFunc) {
       if (!('docFilename' in docInfo)) {
          alert("Error: requires db, corpus, docFilename to update document content");
          return false;
@@ -1047,17 +1265,63 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          contentType: false,      // set false to let jquery specify multipart parameter
          success: function(data, status, xhr) {
             if (data.code == 0) {          // successfully get db list
-               alert(data.message);
+               if(typeof succFunc === "function"){
+                 succFunc();
+               }
+               else{
+                 alert(data.message);
+               }
             }
             else {
-               alert("Upload Error: " + data.code + "\n" + data.message);
-               $("#" + loadingContainerId).hide();           // 2017-05-11
+                console.error("Server Error");
+                if (typeof failFunc === "function"){
+                  failFunc();
+                }
+                else if(typeof me.Error === "function"){
+                  me.Error("Server Error");
+                }
+                else {
+                  alert("Upload Error: " + data.code + "\n" + data.message);
+                  let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+                  $("#" + loadingContainerId).hide();           // 2017-05-11
+                }
+
             }
          },
-         error: function(xhr, status, error) {
+         error: function(jqXHR, textStatus, errorThrown) {
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                alert("Connection Error");
+                let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+                $("#" + loadingContainerId).hide();              // 2017-05-11
+                let retry = function(){
+                  updateOrReplaceDoc(actionUrl, db, corpus, docInfo, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+              }
+            }
             //var err = eval("(" + xhr.responseText + ")");
-            alert(error);
-            $("#" + loadingContainerId).hide();              // 2017-05-11
+
             //ert(xhr.responseText);
          }
       });
