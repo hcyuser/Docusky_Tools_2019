@@ -24,6 +24,7 @@
  * 0.13 (Mar 23 2019)  add url parameter 'includeFriendDb' and setDbListOption()
  * 0.14 (April 11 2019) add error handling and me.Error for the most functions and
  *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
+ * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
  * @copyright
  * Copyright (C) 2016-2018 Hsieh-Chang Tu
  *
@@ -92,6 +93,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.providerList = [];                     // 2018-10-12
    this.uiState = {};                          // 2018-12-02: uiState[dbCorpusListContainerId] = {size: { width:w, height: h}}
    this.Error = null;                          //all scope error handle
+   this.maxResponseTimeout = 300000;
+   this.maxRetryCount = 10;
+   this.presentRetryCount = 0;
    if (typeof(param)=='object' && 'target' in param) {
       me.target = (param.target.toUpperCase() == 'OPEN') ? 'OPEN' : 'USER';
    }
@@ -426,11 +430,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             $("#" + loginMessageId).html("Server Error");
           }
           else{
-            $("#" + loginMessageId).html("Connection Error");
-            let retry = function(){
-              login(username, password);
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              $("#" + loginMessageId).html("Connection Error");
+              let retry = function(){
+                login(username, password);
+              }
+              setTimeout(retry,3000);
             }
-            setTimeout(retry,3000);
+            else{
+              $("#" + loginMessageId).html("Please check your Internet connection and refresh this page.");
+            }
+
           }
 
 
@@ -632,11 +643,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
              alert("Server Error");
            }
            else{
-             alert("Connection Error");
-             let retry = function(){
-               displayDbCorpusList(param, evt);
+             if(me.presentRetryCount < me.maxRetryCount){
+               me.presentRetryCount++;
+               alert("Connection Error");
+               let retry = function(){
+                 displayDbCorpusList(param, evt);
+               }
+               setTimeout(retry,3000);
+
+             }else{
+               alert("Please check your Internet connection and refresh this page.");
              }
-             setTimeout(retry,3000);
+
            }
          }
 
@@ -848,7 +866,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       }
       //alert(url);
 
-	   $.ajaxSetup({xhrFields: {withCredentials: true},timeout: 30000});
+	   $.ajaxSetup({xhrFields: {withCredentials: true},timeout: me.maxResponseTimeout});
       $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {                               // successfully get dbCorpusDocuments
@@ -951,10 +969,16 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
              }
          }
          else{
-          let retry = function(){
-             me.getQueryResultDocuments(param, evt, succFunc, failFunc);
-          }
-          setTimeout(retry,3000);
+           if(me.presentRetryCount < me.maxRetryCount){
+             me.presentRetryCount++;
+             let retry = function(){
+                me.getQueryResultDocuments(param, evt, succFunc, failFunc);
+             }
+             setTimeout(retry,3000);
+           }
+           else{
+             alert("Please check your Internet connection and refresh this page.");
+           }
          }
 
       });
@@ -1084,11 +1108,19 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
              alert("Server Error");
            }
            else{
-             alert("Connection Error");
-             let retry = function(){
-               me.getQueryPostClassification(param, evt, succFunc, failFunc);
+             if(me.presentRetryCount < me.maxRetryCount){
+               me.presentRetryCount++;
+               alert("Connection Error");
+               let retry = function(){
+                 me.getQueryPostClassification(param, evt, succFunc, failFunc);
+               }
+               setTimeout(retry,3000);
+
              }
-             setTimeout(retry,3000);
+             else{
+               alert("Please check your Internet connection and refresh this page.");
+             }
+
            }
          }
 
@@ -1221,11 +1253,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
              alert("Server Error");
            }
            else{
-             alert("Connection Error");
-             let retry = function(){
-               me.getQueryTagAnalysis(param, evt, succFunc, failFunc);
+             if(me.presentRetryCount < me.maxRetryCount){
+               me.presentRetryCount++;
+               alert("Connection Error");
+               let retry = function(){
+                 me.getQueryTagAnalysis(param, evt, succFunc, failFunc);
+               }
+               setTimeout(retry,3000);
              }
-             setTimeout(retry,3000);
+             else{
+               alert("Please check your Internet connection and refresh this page.");
+             }
+
            }
          }
 
@@ -1311,13 +1350,20 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                 alert("Server Error");
               }
               else{
-                alert("Connection Error");
-                let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
-                $("#" + loadingContainerId).hide();              // 2017-05-11
-                let retry = function(){
-                  updateOrReplaceDoc(actionUrl, db, corpus, docInfo, succFunc, failFunc);
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
+                  $("#" + loadingContainerId).hide();              // 2017-05-11
+                  let retry = function(){
+                    updateOrReplaceDoc(actionUrl, db, corpus, docInfo, succFunc, failFunc);
+                  }
+                  setTimeout(retry,3000);
                 }
-                setTimeout(retry,3000);
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
               }
             }
             //var err = eval("(" + xhr.responseText + ")");
