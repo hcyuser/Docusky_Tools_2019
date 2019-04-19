@@ -80,6 +80,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.loginSuccFunc = null;                // 2019-02-19
    me.loginFailFunc = null;
    me.Error = null; //all scope error handle
+   me.maxResponseTimeout = 300000;
+   me.maxRetryCount = 10;
+   me.presentRetryCount = 0;
 
    // =================================
    //       main functions
@@ -295,11 +298,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             $("#" + loginMessageId).html("Server Error");
           }
           else{
-            $("#" + loginMessageId).html("Connection Error");
-            let retry = function(){
-              me.login(username, password, succFunc, failFunc);
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              $("#" + loginMessageId).html("Connection Error");
+              let retry = function(){
+                me.login(username, password, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
             }
-            setTimeout(retry,3000);
+            else{
+              $("#" + loginMessageId).html("Please check your Internet connection and refresh this page.");
+            }
+
           }
 
 
@@ -526,11 +536,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             alert("Server Error");
           }
           else{
-            alert("Connection Error");
-            let retry = function(){
-              me.deleteDb(DbTitle,succFunc,failFunc);
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              alert("Connection Error");
+              let retry = function(){
+                me.deleteDb(DbTitle,succFunc,failFunc);
+              }
+              setTimeout(retry,3000);
             }
-            setTimeout(retry,3000);
+            else{
+              alert("Please check your Internet connection and refresh this page.");
+            }
+
           }
         }
 
@@ -591,11 +608,18 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
              alert("Server Error");
            }
            else{
-             alert("Connection Error");
-             let retry = function(){
-               me.renameDbTitle(oldDbTitle, newDbTitle, succFunc, failFunc);
+             if(me.presentRetryCount < me.maxRetryCount){
+               me.presentRetryCount++;
+               alert("Connection Error");
+               let retry = function(){
+                 me.renameDbTitle(oldDbTitle, newDbTitle, succFunc, failFunc);
+               }
+               setTimeout(retry,3000);
              }
-             setTimeout(retry,3000);
+             else{
+               alert("Please check your Internet connection and refresh this page.");
+             }
+
            }
          }
 
@@ -677,10 +701,19 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
              alert("Server Error");
            }
            else{
-             let retry = function(){
-               me.getUserProfile(evt, succFunc, failFunc);
+             if(me.presentRetryCount < me.maxRetryCount){
+               me.presentRetryCount++;
+               alert("Connection Error");
+               let retry = function(){
+                 me.getUserProfile(evt, succFunc, failFunc);
+               }
+               setTimeout(retry,3000);
+
              }
-             setTimeout(retry,3000);
+             else{
+               alert("Please check your Internet connection and refresh this page.");
+             }
+
            }
 
          }
@@ -842,12 +875,19 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
           if(jqXHR.status=="404" || jqXHR.status=="403"){
              alert("Server Error");
           }else{
-            let retry = function(){
-              //$.ajaxSetup({xhrFields: {withCredentials: true}});
-              //$.ajax(this); //occur CORS
-              me.manageDbList(evt, succFunc, failFunc);
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              let retry = function(){
+                //$.ajaxSetup({xhrFields: {withCredentials: true}});
+                //$.ajax(this); //occur CORS
+                me.manageDbList(evt, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
             }
-            setTimeout(retry,3000);
+            else{
+              alert("Please check your Internet connection and refresh this page.");
+            }
+
           }
 
          }
@@ -864,7 +904,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    //   // TODO
    //   alert("Sorry, this function is not implemented yet");
    //}
-   
+
    me.getUserFriendship = function(param, succFunc, failFunc) {
       var url = me.urlGetUserFriendshipJson;         // url param: friendGenre, friendTags
       let friendGenre = param.friendGenre || false;
@@ -882,12 +922,56 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("GetUserFriendship:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("getUserFriendship: " + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc(data);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("getUserFriendship: " + data.message);
+             }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to get user friendship");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+          if (typeof failFunc === "function") {
+             failFunc();
+          }
+          else if(typeof me.Error === "function"){
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              me.Error("Server Error");
+            }
+            else{
+              me.Error("Connection Error");
+            }
+          }
+          else{
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              alert("Server Error");
+            }
+            else{
+              if(me.presentRetryCount < me.maxRetryCount){
+                me.presentRetryCount++;
+                alert("Connection Error");
+                let retry = function(){
+                  me.getUserFriendship(param, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+
+              }
+              else{
+                alert("Please check your Internet connection and refresh this page.");
+              }
+
+            }
+          }
+
       });
    }
 
@@ -906,15 +990,57 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("getUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("getUserFriendAccessibleDb: " + data.message);
+           console.error("Server Error");
+           if (typeof failFunc === "function"){
+             failFunc(data);
+           }
+           else if(typeof me.Error === "function"){
+             me.Error("Server Error");
+           }
+           else {
+             alert("getUserFriendAccessibleDb: " + data.message);
+           }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to get user friend accessible db");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
+        if (typeof failFunc === "function") {
+           failFunc();
+        }
+        else if(typeof me.Error === "function"){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            me.Error("Server Error");
+          }
+          else{
+            me.Error("Connection Error");
+          }
+        }
+        else{
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            alert("Server Error");
+          }
+          else{
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              alert("Connection Error");
+              let retry = function(){
+                me.getUserFriendAccessibleDb(param, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
+
+            }
+            else{
+              alert("Please check your Internet connection and refresh this page.");
+            }
+          }
+        }
       });
    }
-   
+
    me.replaceUserFriendship = function(param, succFunc, failFunc) {
       var url = me.urlReplaceUserFriendshipJson;
       let friendUsernames = param.friendUsernames || false;    // friendUsernames: username1;username2;...
@@ -934,12 +1060,53 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("replaceUserFriendship:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("replaceUserFriendship: " + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc(data);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("replaceUserFriendship: " + data.message);
+             }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to replace user friendship");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+          if (typeof failFunc === "function") {
+             failFunc();
+          }
+          else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+          }
+          else{
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              alert("Server Error");
+            }
+            else{
+              if(me.presentRetryCount < me.maxRetryCount){
+                me.presentRetryCount++;
+                alert("Connection Error");
+                let retry = function(){
+                  me.replaceUserFriendship(param, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+              }
+              else{
+                alert("Please check your Internet connection and refresh this page.");
+              }
+            }
+          }
       });
    }
 
@@ -957,15 +1124,56 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("replaceUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("replaceUserFriendAccessibleDb: " + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc(data);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("replaceUserFriendAccessibleDb: " + data.message);
+             }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to replace user friend accessible db");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+          if (typeof failFunc === "function") {
+             failFunc();
+          }
+          else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+          }
+          else{
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              alert("Server Error");
+            }
+            else{
+              if(me.presentRetryCount < me.maxRetryCount){
+                me.presentRetryCount++;
+                alert("Connection Error");
+                let retry = function(){
+                  me.replaceUserFriendAccessibleDb(param, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+              }
+              else{
+                alert("Please check your Internet connection and refresh this page.");
+              }
+            }
+          }
       });
    }
-   
+
    me.deleteUserFriendship = function(param, succFunc, failFunc) {
       var url = me.urlDeleteUserFriendshipJson;
       let friendUsernames = param.friendUsernames || false;    // friendUsernames: username1;username2;...
@@ -981,12 +1189,53 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("deleteUserFriendship:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("deleteUserFriendship: " + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc(data);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("deleteUserFriendship: " + data.message);
+             }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to delete user friendship");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+          if (typeof failFunc === "function") {
+             failFunc();
+          }
+          else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+          }
+          else{
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              alert("Server Error");
+            }
+            else{
+              if(me.presentRetryCount < me.maxRetryCount){
+                me.presentRetryCount++;
+                alert("Connection Error");
+                let retry = function(){
+                  me.deleteUserFriendship(param, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+              }
+              else{
+                alert("Please check your Internet connection and refresh this page.");
+              }
+            }
+          }
       });
    }
 
@@ -1004,15 +1253,56 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             else alert("deleteUserFriendAccessibleDb:\n" + JSON.stringify(data.message));
          }
          else {
-            if (typeof failFunc === "function") failFunc(data);
-            else alert("deleteUserFriendAccessibleDb: " + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc(data);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("deleteUserFriendAccessibleDb: " + data.message);
+             }
          }
-      }).fail(function() {
-         if (typeof failFunc === 'function') failFunc();
-         else alert("Failed to delete user friend accessible db");
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status=="404" || jqXHR.status=="403"){
+          console.error("Server Error");
+        }
+        else{
+          console.error("Connection Error");
+        }
+        if (typeof failFunc === "function") {
+           failFunc();
+        }
+        else if(typeof me.Error === "function"){
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              me.Error("Server Error");
+            }
+            else{
+              me.Error("Connection Error");
+            }
+        }
+        else{
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            alert("Server Error");
+          }
+          else{
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              alert("Connection Error");
+              let retry = function(){
+                me.deleteUserFriendAccessibleDb(param, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
+            }
+            else{
+              alert("Please check your Internet connection and refresh this page.");
+            }
+          }
+        }
       });
    }
-   
+
    // for multipart file upload
    var readFile = function(file) {
       var loader = new FileReader();
@@ -1056,6 +1346,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          data: mul.data,
          processData: false,
          type: "post",
+         timeout: me.maxResponseTimeout,
          //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
          xhrFields: {
             withCredentials: true
@@ -1129,11 +1420,17 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                 me.Error("Connection Error");
               }
               else{
-                alert("Connection Error");
-                let retry = function(){
-                  me.uploadMultipart(data, succFunc, failFunc, option);
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let retry = function(){
+                    me.uploadMultipart(data, succFunc, failFunc, option);
+                  }
+                  setTimeout(retry,3000);
                 }
-                setTimeout(retry,3000);
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
               }
             }
 
@@ -1254,6 +1551,21 @@ var docuskyWidgetUtilityFunctions = {
       alert(jsonPretty);
    },
 
+   //2019-04-17
+   setStyle: function(param){
+     if (typeof(param) !== 'object') param = {};
+     if('frameBackgroundColor' in param){
+       $("div.dsw-container").css('border', param.frameBackgroundColor+' solid 3px');
+       $("div.dsw-titleBar").css('background-color', param.frameBackgroundColor);
+     }
+     if('frameColor' in param){
+       $("div.dsw-titleBar").css('color', param.frameColor);
+     }
+     if('contentBackgroundColor' in param){
+       $("div.dsw-container").css('background-color', param.contentBackgroundColor);
+     }
+   },
+
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
@@ -1322,6 +1634,7 @@ $('head').append('<style id="dsw-simplecomboui">'
    + '.dsw-attCntClick { cursor:pointer; text-decoration:underline; color:blue; }'
    + '</style>'
 );
+
 
 // ----------------------------------------------------------------------------------
 // initialize widget
