@@ -1422,6 +1422,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             if(error){
               console.error(error);
               alert(error);
+              if (typeof realfailFunc === "function") {
+                 realfailFunc(error);
+              }
+              else if(typeof me.Error === "function"){
+                 me.Error("Server Error");
+              }
+
             }else{
               console.error("Connection Error");
               if (typeof realfailFunc === "function") {

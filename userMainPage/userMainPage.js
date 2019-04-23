@@ -19,7 +19,7 @@ $(document).ready( function () {
     docuskyDbObj = docuskyManageDbListSimpleUI;
     docuskyJson = docuskyManageDataFileListSimpleUI;
     docuskyDbObj.loginSuccFunc = InitialAfterLogin;
-
+    docuskyDbObj.uploadProgressFunc = uploadProgressFunc;
     $("#JsonManage").hide();
     $("#DocToolBox").hide();
     $("#JsonToolBox").hide();
@@ -45,6 +45,11 @@ function InitialAfterLogin(data){
   GetName();
   GetCorpus();
   GetJson();
+}
+
+function uploadProgressFunc(data){
+  $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+  .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif"><br>'+$("#UploadDBName").val()+' '+data+'%');
 }
 
 function goToTop() {
@@ -337,7 +342,6 @@ var readFile = function(file){
 };
 
 function UploadXMLBTN(event){
-  $("#uploadXmlToBuildDbId").html("上傳中");
   event.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
   var url = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
   formData = [];
@@ -347,11 +351,25 @@ function UploadXMLBTN(event){
   let nameVal = "importedFiles[]";
   formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
   //console.log(formData);
-  docuskyDbObj.uploadMultipart(url, formData,function(data){
-    $("#uploadXmlToBuildDbId").html("開始上傳");
-    alert(data.message);
-    GetCorpus();
-  });
+  $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+  .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif"><br>'+$("#UploadDBName").val()+' 建庫中，請稍後');
+  $('#LoadingDialog').modal({backdrop: 'static', keyboard: false});
+  $("#LoadingDialog").modal('show');
+  docuskyDbObj.uploadMultipart(url, formData,
+    function(data){
+      alert(data.message);
+      GetCorpus();
+      $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+      .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif">');
+      $("#LoadingDialog").modal('hide');
+    },
+    function(data){
+      GetCorpus();
+      $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+      .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif">');
+      $("#LoadingDialog").modal('hide');
+    }
+  );
 }
 
 
@@ -523,11 +541,14 @@ var downloadDocuXml = function (dbname) {
         for (let i in docuSkyObj.docList) {
             documents[docuSkyObj.docList[i].number] = docuSkyObj.docList[i].docInfo
         }
-
+        $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+        .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif"><br>'+dbname+' '+param.page*param.pageSize + " / " + totalFound);
         if (param.page * param.pageSize <= totalFound) {
             param.page += 1;
             docuSkyObj.getQueryResultDocuments(param, null, getDocList);
         } else {
+            $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+            .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif">');
             $("#LoadingDialog").modal('hide');
             let exporter = new DocuSkyExporter();
             let xmlString = exporter.generateDocuXml(documents, param.db);
@@ -538,7 +559,8 @@ var downloadDocuXml = function (dbname) {
     };
 
     docuSkyObj.hideLoadingIcon(true);
-    alert("下載中，請稍候");
+    $('#LoadingDialog .modal-dialog .modal-content .modal-body .text-center')
+    .html('<img src="https://docusky.org.tw/DocuSky/WebApi/images/loading-circle.gif"><br>'+dbname+' 下載中，請稍候');
     $('#LoadingDialog').modal({backdrop: 'static', keyboard: false});
     $("#LoadingDialog").modal('show');
     docuSkyObj.getQueryResultDocuments(param, null, getDocList);
