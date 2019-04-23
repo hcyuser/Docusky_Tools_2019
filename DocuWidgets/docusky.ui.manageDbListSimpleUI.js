@@ -80,6 +80,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.loginSuccFunc = null;                // 2019-02-19
    me.loginFailFunc = null;
    me.Error = null; //all scope error handle
+   me.uploadProgressFunc = null; //callback function for the percentage of upload progress
    me.maxResponseTimeout = 300000;
    me.maxRetryCount = 10;
    me.presentRetryCount = 0;
@@ -345,6 +346,12 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
    me.disableWidgetEvent = function(evtKey) {
       if (me.validEvtKeys.indexOf(evtKey) !== false) me.widgetEvents[evtKey] = null;
+   }
+
+   // 2019-04-22
+   me.setLoadingIcon = function(url){
+     let loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
+     $("#"+loadingSignId+" img").attr("src", url);
    }
 
    var displayDbList = function(evt, succFunc) {
@@ -1359,11 +1366,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             xhr.upload.addEventListener("progress", function(evt) {
                if (evt.lengthComputable) {
                   var position = evt.loaded || evt.position;
-				      var percentComplete_f = position / evt.total * 100;	// 20170302
+				          var percentComplete_f = position / evt.total * 100;	// 20170302
                   var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
                   var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
-				      $("#" + me.uploadProgressId + " .dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
-				      //$("div.dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
+                  var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
+				          $("#" + uploadProgressId + " .dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
+				          //$("div.dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
+                  if(typeof me.uploadProgressFunc === 'function') me.uploadProgressFunc(percentComplete_i);
                }
             }, false);     // true: event captured in capturing phase, false: bubbling phase
             //// download progress
@@ -1399,13 +1408,15 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                }
 
             }
-            $("#" + me.uploadProgressId).hide();
+            var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
+            $("#" + uploadProgressId).hide();
             //$("div.dsw-uploadprogressbar").hide();    // 20170419
             //$("#" + uploadXmlToBuildDbId).prop('disabled', true);
         },
          error: function(xhr, status, error) {
             //var err = eval("(" + xhr.responseText + ")");
-            $("#" + me.uploadProgressId).hide();
+            var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
+            $("#" + uploadProgressId).hide();
             var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
             $("#"+loadingContainerId).hide();
             if(error){
@@ -1437,7 +1448,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             //ert(xhr.responseText);
          }
       });
-	   $("#" + me.uploadProgressId).find(".dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
+     var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
+	   $("#" + uploadProgressId).find(".dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
       //$("div.dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
    };
 
