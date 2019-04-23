@@ -25,7 +25,7 @@
  * 0.14 (April 11 2019) add error handling and me.Error for the most functions and
  *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
- * 0.16 (April 21 2019) add ownerUsername for supporting friend-accessible db
+ * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
  *
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
@@ -42,7 +42,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    var me = this;
 
    this.package = 'docusky.ui.getDbCorpusDocumentsSimpleUI.js';    // 主要目的：取得給定 db, corpus 的文件
-   this.version = 0.13;                             // 2019-03-23
+   this.version = 0.16;                             // 2019-04-23
    this.idPrefix = 'CorpusDoc_';                    // 2016-08-13
 
    this.showPublicDbLink = true;                    // 2018-09-30, 2018-10-15
@@ -67,7 +67,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.initialized = false;
    this.target = 'USER';                            // 'target', 'db', 'corpus' are input parameters of urlGetQueryResultDocumentsJson
    this.includeFriendDb = true;                     // 2019-03-23: default false for backward-compatibility
-   this.ownerUsername = false;                      // 2019-04-21: 目前似乎不需要 username...
+   this.ownerUsername = null;                       // 2019-04-21: 目前似乎只需 ownerUsername 而不需要 username...
    this.db = '';
    this.corpus = '';
    this.query = '';                                 // 儲存最後一個 query
@@ -87,6 +87,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    this.pageSize = 200;                        // default page size
    this.docList = [];                          // 儲存 DocuSky 的文件列表 (if fieldsOnly ==> the content will be doc metadata only)
    this.spotlights = '';
+   this.featureAnalysisSettings = '';          // 2019-04-23: expose to caller
    this.postClassification = {};
    this.features = '';
    this.tagAnalysis = {};
@@ -889,9 +890,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                me.pageSize = data.message.pageSize;
                me.docList = data.message.docList.slice();          // 2017-01-17: copy value so that the caller can use it
                me.target = data.message.target;                    // 2016-05-02
+               me.ownerUsername = data.message.ownerUsername;      // 2019-04-23
                me.db = data.message.db;                            // should be equal to me.db
                me.corpus = data.message.corpus;                    // should be equal to me.corpus
                me.spotlights = data.message.spotlights;            // 2016-12-18
+               me.featureAnalysisSettings = data.message.featureAnalysisSettings;    // 2019-04-23
                me.fieldsInly = (data.message.fieldsOnly !== undefined)
                              ? data.message.fieldsOnly : '';       // 2018-09-15
 
@@ -900,15 +903,17 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             else {
                // copy to object's specific variable (channel area)
                var ch = me.channelBuffer[retChannelKey];
-               ch.query       = data.message.query;                // 2017-01-24
-               ch.totalFound  = data.message.totalFound;
-               ch.page        = data.message.page;
-               ch.pageSize    = data.message.pageSize;
-               ch.docList     = data.message.docList.slice();
-               ch.target      = data.message.target;
-               ch.db          = data.message.db;
-               ch.corpus      = data.message.corpus;
-               ch.spotlights  = data.message.spotlights;
+               ch.query                   = data.message.query;                // 2017-01-24
+               ch.totalFound              = data.message.totalFound;
+               ch.page                    = data.message.page;
+               ch.pageSize                = data.message.pageSize;
+               ch.docList                 = data.message.docList.slice();
+               ch.target                  = data.message.target;
+               ch.ownerUsername           = data.message.ownerUsername;       // 2019-04-23
+               ch.db                      = data.message.db;
+               ch.corpus                  = data.message.corpus;
+               ch.spotlights              = data.message.spotlights;
+               ch.featureAnalysisSettings = data.message.featureAnalysisSettings;    // 2019-04-23
                ch.fieldsInly  = (data.message.fieldsOnly !== undefined)
                               ? data.message.fieldsOnly : '';      // 2018-09-15
                if (typeof ch.callerCallback === "function") {
@@ -1295,7 +1300,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    }
 
    var updateOrReplaceDoc = function(actionUrl, ownerUsername, db, corpus, docInfo, succFunc, failFunc) {
-      if (!('docFilename' in docInfo)) {
+      if (docInfo['docFilename'] === undefined) {
          alert("Error: requires db, corpus, docFilename to update document content");
          return false;
       }
