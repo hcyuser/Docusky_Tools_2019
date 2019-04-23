@@ -25,8 +25,10 @@
  * 0.14 (April 11 2019) add error handling and me.Error for the most functions and
  *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
+ * 0.16 (April 21 2019) add ownerUsername for supporting friend-accessible db
+ *
  * @copyright
- * Copyright (C) 2016-2018 Hsieh-Chang Tu
+ * Copyright (C) 2016-2019 Hsieh-Chang Tu
  *
  * @license
  *
@@ -61,10 +63,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    this.callerEvent = null;
    this.callerCallback = null;                      // 儲存成功執行後所需呼叫的函式
-   //this.callerCallbackParameters = null;            // 儲存回呼函式的傳入參數
+   //this.callerCallbackParameters = null;          // 儲存回呼函式的傳入參數
    this.initialized = false;
    this.target = 'USER';                            // 'target', 'db', 'corpus' are input parameters of urlGetQueryResultDocumentsJson
-   this.includeFriendDb = false;                    // 2019-03-23: default false for backward-compatibility
+   this.includeFriendDb = true;                     // 2019-03-23: default false for backward-compatibility
+   this.ownerUsername = false;                      // 2019-04-21: 目前似乎不需要 username...
    this.db = '';
    this.corpus = '';
    this.query = '';                                 // 儲存最後一個 query
@@ -384,10 +387,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                //me.getDbCorpusDocuments(me.target, me.db, me.corpus, me.callerEvent, me.callerCallback, me.callerCallbackParameters);
                // 2018-09-15
                var param = { target: me.target,
+                             ownerUsername: me.ownerUsername,  // 2019-04-21
                              db: me.db,
                              corpus: me.corpus,
                              page: me.page,
-                             pageSize: me.pageSize,           // 2018-09-18: fix bug (misspelled "pageSizde")
+                             pageSize: me.pageSize,            // 2018-09-18: fix bug (misspelled "pageSizde")
                              fieldsOnly: me.fieldsOnly,
                              };
                //alert(JSON.stringify(param));
@@ -486,6 +490,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       let friendDb = (me.includeFriendDb) ? '&includeFriendDb=1' : '';
       let url = me.urlGetDbCorpusListJson + '?' + 'target=' + displayTarget + friendDb;
+      //alert(url);
       $.get(url, function(data) {
          $("#" + loadingContainerId).hide();
          if (data.code == 0) {          // success
@@ -510,7 +515,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                             + "&db=" + db + "&corpus=" + corpus + "&query=.all&page=" + page + "&pageSize=" + pageSize
                             + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');
                s += "<tr class='dsw-tr-contentlist'><td class='dsw-td-contentlist dsw-td-contentlist-num'>" + num + ".</td>"
-                  + "<td class='dsw-td-contentlist dsw-td-contentlist-dbname'>" + (username == ownerUsername ? "" : ownerUsername + ": ") + db + "</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-dbname'>" + (username == ownerUsername ? "" : "<span class='dsw-ownerUsername'>" + ownerUsername + "</span> ") + db + "</td>"
                   + "<td class='dsw-td-contentlist dsw-td-contentlist-corpusname'>" + corpus + "</td><td class='dsw-td-contentlist dsw-td-contentlist-load'>"
                   + "<nobr><a class='loadDbCorpusDocument' href='dummy?" + urlParam + "'>載入</a></nobr>"       // 2018-09-04: add <nobr>
                   + "</td></tr>";
@@ -547,6 +552,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                e.preventDefault();
                var url = this.href;
                var target = me.utility.getUrlParameterVarValue(url, 'target');
+               var ownerUsername = me.utility.getUrlParameterVarValue(url, 'ownerUsername');   // 2019-04-21
                var db = me.utility.getUrlParameterVarValue(url, 'db');
                var corpus = me.utility.getUrlParameterVarValue(url, 'corpus');
                var page = me.utility.getUrlParameterVarValue(url, 'page');
@@ -559,6 +565,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                //             否則，若能用 callback.apply()，程式就會漂亮許多..
                //             例如：callback.apply(me, [target, db, corpus, page, pageSize, me.callerEvent, me.callerCallback]);    // me.callerCallback 負責將載入的內容顯示出來
                var param = { target: target,
+                             ownerUsername: ownerUsername,        // 2019-04-21
                              db: db,
                              corpus: corpus,
                              page: page,
@@ -713,6 +720,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    me.getDbCorpusDocuments = function(target, db, corpus, evt, succFunc, failFunc) {
       var param = { 'target': target,
+                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble... 
                     'db': db,
                     'corpus': corpus,
                     'query': '.all',
@@ -741,6 +749,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 	   }
 
       var param = { 'target': target,
+                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble... 
                     'db': db,
                     'corpus': corpus,
                     'query': '.all',
@@ -796,9 +805,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else my = me;
       my.callerEvent = evt;
       if (typeof succFunc === "function") my.callerCallback = succFunc;
-    //my.callerCallbackParameters = successFuncParameters;
+      //my.callerCallbackParameters = successFuncParameters;
       my.target = target.toUpperCase();
       if (my.target != 'OPEN') my.target = 'USER';
+      my.ownerUsername = ownerUsername;   // 2019-04-21
       my.db = db;
       my.corpus = corpus;
       my.query = query;
@@ -1272,29 +1282,30 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //$.ajaxSetup({async:true});
    };
 
-   me.updateDocument = function(db, corpus, docInfo, succFunc, failFunc) {
-      updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, db, corpus, docInfo, succFunc, failFunc);
+   me.updateDocument = function(ownerUsername, db, corpus, docInfo, succFunc, failFunc) {       // 2019-04-21: add ownerUsername
+      updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, ownerUsername, db, corpus, docInfo, succFunc, failFunc);
    };
 
-   me.replaceDocument = function(db, corpus, docInfo, succFunc, failFunc) {      // 2018-10-15
-      updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, db, corpus, docInfo, succFunc, failFunc);
+   me.replaceDocument = function(ownerUsername, db, corpus, docInfo, succFunc, failFunc) {      // 2018-10-15
+      updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, ownerUsername, db, corpus, docInfo, succFunc, failFunc);
    };
 
    me.setDbListOption = function(param) {                    // 2019-03-23
      if (param.includeFriendDb) me.includeFriendDb = param.includeFriendDb;
    }
 
-   var updateOrReplaceDoc = function(actionUrl, db, corpus, docInfo, succFunc, failFunc) {
+   var updateOrReplaceDoc = function(actionUrl, ownerUsername, db, corpus, docInfo, succFunc, failFunc) {
       if (!('docFilename' in docInfo)) {
          alert("Error: requires db, corpus, docFilename to update document content");
          return false;
       }
 
       var fd = new FormData();
+      if (ownerUsername) fd.append('ownerUsername', ownerUsername);     // 2019-04-21
       fd.append('db', db);
       fd.append('corpus', corpus);
       fd.append('json', JSON.stringify(docInfo));
-
+      //alert(JSON.stringify(ownerUsername));
       $.ajax({
          url: actionUrl,
          data: fd,
@@ -1356,7 +1367,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
                   $("#" + loadingContainerId).hide();              // 2017-05-11
                   let retry = function(){
-                    updateOrReplaceDoc(actionUrl, db, corpus, docInfo, succFunc, failFunc);
+                    updateOrReplaceDoc(actionUrl, ownerUsername, db, corpus, docInfo, succFunc, failFunc);
                   }
                   setTimeout(retry,3000);
                 }
@@ -1531,6 +1542,7 @@ $('head').append('<style id="dsw-simplecomboui">'
    + 'span.dsw-corpusAttCntClick { cursor:pointer; text-decoration:underline; color:blue; }'
    + 'span.dsw-corpusClick { cursor:pointer; text-decoration:underline; color:blue; }'
    + 'span.dsw-attCntClick { cursor:pointer; text-decoration:underline; color:blue; }'
+   + 'span.dsw-ownerUsername { background-color:darkred; color:white; border-radius:3px; padding:2px; font-size:0.8em; display:inline-block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px; }'
    + '</style>'
 );
 
