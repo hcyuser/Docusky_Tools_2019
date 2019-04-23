@@ -23,6 +23,11 @@
  * 0.12 (April 01 2019) add error handling and me.Error for the most functions and
  *                      modify the parameter of uploadMultipart()
  * 0.13 (April 04 2019) add functions for user friendship and accessible dbs
+ * 0.14 (April 23 2019) add with mechanism on maxResponseTimeout, maxRetryCount, uploadProgressFunc, utility.setStyle, setLoadingIcon
+ *                      fix the display of uploadprogressbar
+ *
+ *
+ *
  *
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
