@@ -462,6 +462,12 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else alert("Argument of addExtraFunctions() must be a function");
    };
 
+   // 2019-04-22
+   me.setLoadingIcon = function(url){
+     let loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
+     $("#"+loadingSignId+" img").attr("src", url);
+   };
+
    /*me.setLoginAction = function(loginInvokeFun, loginInvokeFunParameters) {
       me.loginInvokeFun = loginInvokeFun;
       me.loginInvokeFunParameters = loginInvokeFunParameters;
@@ -721,7 +727,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
    me.getDbCorpusDocuments = function(target, db, corpus, evt, succFunc, failFunc) {
       var param = { 'target': target,
-                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble... 
+                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble...
                     'db': db,
                     'corpus': corpus,
                     'query': '.all',
@@ -750,7 +756,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 	   }
 
       var param = { 'target': target,
-                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble... 
+                    'ownerUsername': me.ownerUsername,             // 2019-04-21: this can get trouble...
                     'db': db,
                     'corpus': corpus,
                     'query': '.all',
@@ -1478,6 +1484,21 @@ var docuskyWidgetUtilityFunctions = {
       //var jsonObj = JSON.parse(jsonStr);
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
+   },
+
+   //2019-04-17
+   setStyle: function(param){
+     if (typeof(param) !== 'object') param = {};
+     if('frameBackgroundColor' in param){
+       $("div.dsw-container").css('border', param.frameBackgroundColor+' solid 3px');
+       $("div.dsw-titleBar").css('background-color', param.frameBackgroundColor);
+     }
+     if('frameColor' in param){
+       $("div.dsw-titleBar").css('color', param.frameColor);
+     }
+     if('contentBackgroundColor' in param){
+       $("div.dsw-container").css('background-color', param.contentBackgroundColor);
+     }
    },
 
    // 2017-01-01
