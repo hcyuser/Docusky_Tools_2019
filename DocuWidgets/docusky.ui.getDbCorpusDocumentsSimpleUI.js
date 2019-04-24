@@ -26,7 +26,7 @@
  *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
  * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
- *
+ * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
  *
@@ -462,7 +462,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else alert("Argument of addExtraFunctions() must be a function");
    };
 
-   // 2019-04-22
+   // 2019-04-24
    me.setLoadingIcon = function(url){
      let loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
      $("#"+loadingSignId+" img").attr("src", url);
@@ -1486,7 +1486,7 @@ var docuskyWidgetUtilityFunctions = {
       alert(jsonPretty);
    },
 
-   //2019-04-17
+   //2019-04-24
    setStyle: function(param){
      if (typeof(param) !== 'object') param = {};
      if('frameBackgroundColor' in param){
