@@ -396,7 +396,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                              fieldsOnly: me.fieldsOnly,
                              };
                //alert(JSON.stringify(param));
-               me.getQueryResultDocuments(param, null, me.callerCallback);
+               me.getQueryResultDocuments(param, me.callerEvent, me.callerCallback);
 
             }
          }
@@ -480,7 +480,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       // show loading icon
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});
+      $("#" + loadingContainerId).position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"}).show();
       $("#" + workingProgressId).html("connecting");
 
       var dbCorpusListContentId = me.idPrefix + "dbCorpusListContent" + me.uniqueId;
@@ -546,13 +546,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             $("span.dsw-listOpenCorpuses").unbind("click").click(function(e) {
                var param = { target: 'OPEN',
                              invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
-               displayDbCorpusList(param, e);
+               displayDbCorpusList(param, evt);
             });
 
             $("span.dsw-listPersonalCorpuses").unbind("click").click(function(e) {
                var param = { target: 'USER',
                              invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
-               displayDbCorpusList(param, e);
+               displayDbCorpusList(param, evt);
             });
 
             $(".loadDbCorpusDocument").click(function(e) {
@@ -584,7 +584,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                   // me.callerCallback 負責將載入的內容顯示出來
                   // 2017-07-22: 注意，傳入當前的 event e，而非 me.callerEvent
                   //me.getDbCorpusDocumentsGivenPageAndSize(target, db, corpus, page, pageSize, e, me.callerCallback, null);
-                  me.getQueryResultDocuments(param, e, me.callerCallback);     // 2018-09-15
+                  me.getQueryResultDocuments(param, evt, me.callerCallback);     // 2018-09-15
                   break;
                case 'getQueryPostClassification':
                   me.getQueryPostClassification(param, me.callerEvent, me.callerCallback);
@@ -602,8 +602,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             // 2016-05-24: 必須在顯示之後，才能取得 render 之後的 height...
             //             To get an accurate value, ensure the element is visible before using .height()
             let jelement = $("#" + dbCorpusListContainerId);
-            let duration = 200;
+            let duration = 40;
             let opacity = 1;
+            //jelement.position({my: "left top", at: "center bottom", of: evt, collision: "fit"});    // 20170619: change "none" to "fit"
             jelement.fadeTo(duration, opacity, function() {
                // 2018-10-02
                //let h = $(this).height();

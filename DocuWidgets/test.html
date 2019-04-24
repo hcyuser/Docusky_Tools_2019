@@ -72,6 +72,9 @@ $(window).ready(function() {
       var target = 'USER';
       var db = '', corpus = '';             // empty string: force the simpleUI to display a menu for user selection
       docuSkyGetDocsObj.getDbCorpusDocuments(target, db, corpus, e, window.displayDocList);
+      //docuSkyGetDocsObj.getQueryTagAnalysis({}, e)
+      //docuSkyGetDocsObj.getQueryPostClassification({}, e)
+
    });
 
    $("#manageDataFiles").click(function(e) {
@@ -125,7 +128,7 @@ function displayDocList() {
       // update document
       var db = docuSkyGetDocsObj.db;
       var corpus = docuSkyGetDocsObj.corpus;
-      docuSkyGetDocsObj.updateDocument(db, corpus, docInfo);
+      docuSkyGetDocsObj.updateDocument(docuSkyGetDocsObj.ownerUsername,db, corpus, docInfo);
       // refresh content
       var tdId = "contentChapter_" + chapter;
       $("#" + tdId).html(docInfo.docContentXml);
