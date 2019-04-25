@@ -10,18 +10,19 @@
  * @version
  * 0.01 (May xx 2016)
  * 0.02 (August xx 2016)
- * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts)
+ * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts) 
  * 0.04 (March 01 2017) add simple message for upload progress
  * 0.05 (July 07 2017) bugs fix: apply encodeURIComponent() to category/pathfile
  * 0.06 (July 28 2017) set "private" methods
  * 0.07 (July 31 2017) modify the arguments of jsonTransporter.storeJson(), add hideWidget()
  * 0.08 (Nov 27 2017) add renameDataFile()
- *
+ * 0.09 (January 30 2018) expose login(), add withCredentials
+ * 
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
  * @license
- *
+ * 
  */
 
 if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
@@ -30,11 +31,11 @@ if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
 
 var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    var me = this;                                               // store object reference
-
+   
    me.package = 'docusky.ui.manageDataFileListSimpleUI.js';   // 主要目的：取得 data file list，並讓使用者可上載或刪除 data files
-   me.version = 0.08;
+   me.version = 0.09;
    me.idPrefix = 'DataFile_';                                 // 2016-08-13
-
+   
    me.utility = null;
    me.protocol = null;                                        // 'http',
    me.urlHostPath = null;
@@ -48,15 +49,15 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    me.urlLogout = null;
    me.username = '';
    me.loginCallback = null;               // 儲存當前欲執行的函式（成功登入後將自動呼叫）
-   me.callerEvent = null;
+   me.callerEvent = null; 
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
    me.categoryFilenameList = [];          // 儲存 category => filenames 的物件
    me.fileName = '';                      // 欲上傳檔案（在本地）的名稱
    me.fileData = '';                      // 欲上傳檔案的內容
-
+   
    me.displayWidget = true;               // 2017-07-31
-
+   
    me.jsonTransporter = {                 // 利用此物件的 jsonObj 在 client-server 之間傳遞 json 物件
       category: 'unknown',
       datapath: 'unknown',
@@ -64,7 +65,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       jsonObj: null,
       serverCode: 0,
       serverMessage: '',
-
+      
       // 利用此函式存取 Json -- 注意 storeJson 和 retrieveJson 字面的 "Json" 指的是以 JSON 儲存到 DocuSky，
       //                        函式的 json 參數都是物件型態（而非字串）
       storeJson: function(category, datapath, filename, jsonObj, callback) {
@@ -87,11 +88,11 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             var callback = (arguments.length >= 5) ? arguments[4] : null;
          }
 
-         // get parameters from parent
+         // get parameters from parent         
          if (me.urlSaveDataFileJson === null) init();
          var url = me.urlSaveDataFileJson;
          //alert(url);
-
+         
          var fd = new FormData();
          fd.append('uploadDataCategory', category);
          fd.append('uploadDataPath', datapath);
@@ -104,7 +105,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          fd.append('importedFiles[]', blob);
          uploadBlob(url, fd, false, callback);    // false: disable dialog
       },
-
+      
       retrieveJson: function(category, datapath, filename, callback) {
          var transporter = this;
          transporter.category = category;
@@ -113,27 +114,27 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          var url = me.urlLoadDataFileBinary;
          var parameters = "catpathfile=" + encodeURIComponent(transporter.category) + "/" + encodeURIComponent(transporter.datapath) + "/" + encodeURIComponent(transporter.filename);
          url += "?" + parameters;
+         $.ajaxSetup({xhrFields: {withCredentials: true}});
          $.getJSON(url, function(data) {
             transporter.jsonObj = data;
             if (typeof callback === 'function') callback();
          });
-		 //.done(function(data) {
-         //});
       },
-
+      
       // 2017-07-31
       deleteDataFile: function(category, datapath, filename, callback) {
          var transporter = this;
          var url = me.urlDeleteDataFileJson;
-         var parameters = "category=" + encodeURIComponent(category)
+         var parameters = "category=" + encodeURIComponent(category) 
                         + "&pathfile=" + encodeURIComponent(datapath + "/" + filename);
          url += "?" + parameters;
+         $.ajaxSetup({xhrFields: {withCredentials: true}});
          $.getJSON(url, function(data) {
             transporter.jsonObj = data;
             if (typeof callback === 'function') callback();
          });
       },
-
+      
       // 2016-08-12: v0.02
       listCategoryDataFiles: function(category, datapath, callback) {
          var transporter = this;
@@ -142,28 +143,30 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          var url = me.urlGetCategoryDataFilenamesJson;
          var parameters = "catpath=" + catpath;
          url += "?" + parameters;
+         $.ajaxSetup({xhrFields: {withCredentials: true}});
          $.getJSON(url, function(data) {
             transporter.jsonObj = data;
             if (typeof callback === 'function') callback();
          });
       },
-
+      
       // 2017-11-27: v0.08 (currently not support renaming category and datapath ==> assuming tools need these names to find their data files)
       renameDataFile: function(category, datapath, fromFilename, toFilename, callback) {
          var transporter = this;
          var url = me.urlRenameDataFileJson;
-         var parameters = "category=" + encodeURIComponent(category)
+         var parameters = "category=" + encodeURIComponent(category) 
                         + "&filepath=" + encodeURIComponent(datapath)
                         + "&fromFilename=" + encodeURIComponent(fromFilename)
                         + "&toFilename=" + encodeURIComponent(toFilename);
          url += "?" + parameters;
+         $.ajaxSetup({xhrFields: {withCredentials: true}});
          $.getJSON(url, function(data) {
             transporter.jsonObj = data;
             if (typeof callback === 'function') callback();
          });
       },
    };
-
+   
    // =================================
    //       main functions
    // =================================
@@ -172,7 +175,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       //var scriptPath = me.utility.getScriptPath();
       //me.urlHostPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
       // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlHostPath = "https://docusky.org.tw/DocuSky"+ '/webApi';
+      me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy')) + '/webApi';
       me.urlGetAllCategoryDataFilenamesJson =  me.urlHostPath + '/getAllCategoryDataFilenamesJson.php';
       me.urlGetCategoryDataFilenamesJson =  me.urlHostPath + '/getDataFilenamesUnderCatpathJson.php';
       me.urlSaveDataFileJson =  me.urlHostPath + '/saveDataFileByHttpPostJson.php';
@@ -185,14 +188,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
       me.uniqueId = me.utility.uniqueId();
 
-      // login container
+      // login container      
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       var closeLoginContainerId = me.idPrefix + "closeLoginContainer" + me.uniqueId;
       var dsUsernameId = me.idPrefix + "dsUsername" + me.uniqueId;
       var dsPasswordId = me.idPrefix + "dsPassword" + me.uniqueId;
       var loginSubmitId = me.idPrefix + "loginSubmit" + me.uniqueId;
       var loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
-
+      
       var s = "<div id='" + loginContainerId + "' class='dsw-container'>"
             + "<div class='dsw-titleBar'><table><tr><td class='dsw-titleContainer'><div class='dsw-titlename'>DocuSky Login</div></td><td class='dsw-closeContainer' id='" + closeLoginContainerId + "'><div class='dsw-btn-close'>&#x2716;</div></td></tr></table></div>"
             + "<div class='dsw-containerContent'>"
@@ -210,12 +213,12 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       $("#" + loginSubmitId).click(function(e) {
          me.username = $("#" + dsUsernameId).val();
          $("#" + spanUsernameId).html(me.username);
-         login(me.username, $("#" + dsPasswordId).val());
+         me.login(me.username, $("#" + dsPasswordId).val());
       });
       $("#" + closeLoginContainerId).click(function(e) {
          $("#" + loginContainerId).hide();
       });
-
+      
       var filenameListContainerId = me.idPrefix + "filenameListContainer" + me.uniqueId;
       var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
       var filenameListContentId = me.idPrefix + "filenameListContent" + me.uniqueId;
@@ -228,14 +231,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       var logoutAnchorId = me.idPrefix + "logoutAnchor" + me.uniqueId;
       var closefilenameListId = me.idPrefix + "closefilenameList" + me.uniqueId;
       var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;	// 20170302
-
+	  
       // filenameListContainer container
       var myVer = me.package + " - Ver " + me.version;
       var t = "登出";
       var s = "<div id='" + filenameListContainerId + "' class='dsw-container'>"
-            + "<div class='dsw-titleBar'>"
+            + "<div class='dsw-titleBar'>" 
             + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>DataFile List</div></td>"
-            + "<td class='dsw-closeContainer'>" + "<div class='dsw-btn-close' id='" + closefilenameListId + "'>&#x2716;</div>" + "<span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span>" + "<span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span>" + "</td>" + "</tr></table>"
+            + "<td class='dsw-closeContainer'>" + "<div class='dsw-btn-close' id='" + closefilenameListId + "'>&#x2716;</div>" + "<span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span>" + "<span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span>" + "</td>" + "</tr></table>" 
             + "</div>"
             + "<div id='" + filenameListContentId + "' class='dsw-containerContent'>"
             + "</div>"
@@ -247,7 +250,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             + "<tr><td>指定欲儲存的位置：</td>"
             + "<td>類別：<input type='text' class='dsw-userinput' id='" + uploadDataCategoryId + "' name='uploadDataCategory' value='Default'></input></td>"
             + "<td>路徑：<input type='text' class='dsw-userinput' id='" + uploadDataPathId + "' name='uploadDataPath' size='20' value='Default'></input></td>"
-            + "</tr><tr>"
+            + "</tr><tr>" 
             + "<td colspan='2'><div class='dsw-uploadprogressbar' id='" + uploadProgressId + "'><div class='dsw-uploadprogressbar-progress'></div></div></td>"
             + "<td align='right'><button id='" + uploadFormSubmitId + "'>開始上傳</button></td></tr>"
             + "</table>"
@@ -256,7 +259,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             + "</div>";
       $("html").append(s);
       $("#" + filenameListContainerId).hide();
-
+      
       $("#" + logoutAnchorId).click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -276,14 +279,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       $("#" + closefilenameListId).click(function(e) {
          $("#" + filenameListContainerId).hide();
       });
-
+      
       $("#" + uploadFormSubmitId).click(function(e) {
          e.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
          var url = me.urlSaveDataFileJson;
-
+         
          var uploadDataCategoryId = me.idPrefix + "uploadDataCategory" + me.uniqueId;
          var uploadDataPath = me.idPrefix + "uploadDataPath" + me.uniqueId;
-
+         
          var fd = new FormData();
          fd.append('uploadDataCategory', $("#" + uploadDataCategoryId).val());
          fd.append('uploadDataPath', $("#" + uploadDataPathId).val());
@@ -294,20 +297,21 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          //alert(me.fileData.length + ':' + blob.size);
          fd.append('importedFiles[]', blob);
          uploadBlob(url, fd, true, null);       // true: enable dialog display
-
+         
          //// HTTP POST with multipart -- but, XmlHttp has some restrictions on sending binary data!
          //var formData = $("#uploadForm").serializeArray();
          //var nameVal = $("#uploadDataFilenameSelected").attr("name");     // <input type="file" name="...">
          //formData.file = {value: me.fileData, filename: me.fileName, name:nameVal};
          //uploadMultipart(url, formData);
       });
-
+      
       me.initialized = true;
    };
-
-   var login = function(username, password) {
+   
+   me.login = function(username, password) {
       //$.ajaxSetup({async:false});
       var postdata = { dsUname: username, dsPword: password };     // camel style: to get dbCorpusDocuments
+      $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.post(me.urlLogin, postdata, function(jsonObj) {
          var loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
          var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
@@ -324,17 +328,17 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       }, 'json');
       //$.ajaxSetup({async:true});
    };
-
+   
    // 繪製 DataFileList 的表格
    var displayFilenameList = function() {     // category => filelist
       var editableContentBackup = null;
       var categoryFilenameList = me.categoryFilenameList;
       //alert(JSON.stringify(categoryFilenameList, null, '\t'));
-
+      
       var contentTableId = me.idPrefix + "contentTable" + me.uniqueId;
       var filenameListContentId = me.idPrefix + "filenameListContent" + me.uniqueId;
       var uploadDataFilenameSelectedId = me.idPrefix + "uploadDataFilenameSelected" + me.uniqueId;
-
+      
       var s = "<table class='dsw-filenameList' id='" + contentTableId + "'>";
       var itemNumber = 0;
       for (var category in categoryFilenameList) {
@@ -359,9 +363,9 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
       }
       s += "</table>";
-
+      
       $("#" + filenameListContentId).html(s);
-
+      
       $(".dsw-filenameList-filename").on("dblclick", function() {
          $(this).attr("contentEditable", "true");
          editableContentBackup = $(this).text();
@@ -390,8 +394,8 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
          else ;      // same content ==> does nothing
       });
-
-
+      
+      
       var h = $("#" + contentTableId).height();
       $("#" + filenameListContentId).height(Math.min(280,Math.max(h,50)));
 
@@ -405,7 +409,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          });
          //me.urlSaveDataFileJson
       });
-
+      
       $(".deleteFile").click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -422,11 +426,11 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }, 'json');
       });
    };
-
+   
    // 顯示 DataFileList 的 container
    me.manageDataFileList = function(evt, successFunc) {
       if (!me.initialized) init();
-
+      
       me.callerEvent = evt;
       me.callerCallback = successFunc;
       me.loginCallback = me.getDbCorpusDocuments;
@@ -445,7 +449,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          if (data.code == 0) {          // successfully get db list
             if (me.displayWidget) {
                var jelement = $("#" + filenameListContainerId);
-               var w = jelement.width(600);
+               var w = jelement.width(600);                                // 2018-03-21
                var h = jelement.height();
                var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
                var posLeft = Math.max(10, evt.pageX - overX - 40);
@@ -476,39 +480,40 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       //$.ajaxSetup({async:true});
    };
 
-   // 2017-07-31
+   // 2017-07-31, 2018-04-04 bugs fix
    me.hideWidget = function(bool) {
       me.displayWidget = (bool === false);
       if (!me.displayWidget) {
-         var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
-         $("#" + dbListContainerId).hide();
+         var filenameListContainerId = me.idPrefix + "filenameListContainer" + me.uniqueId;
+         $("#" + filenameListContainerId).hide();
          var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
          $("#" + loginContainerId).hide();
       }
    };
-
+   
    // for multipart file upload
    var readFile = function(file) {
       var loader = new FileReader();
       var def = $.Deferred(), promise = def.promise();
-
+   
       //--- provide classic deferred interface
       loader.onload = function (e) { def.resolve(e.target.result); };
       loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
       loader.onerror = loader.onabort = function (e) { def.reject(e); };
       promise.abort = function () { return loader.abort.apply(loader, arguments); };
-
+   
       loader.readAsBinaryString(file);
       //loader.readAsText(file,'UTF-8');         // 若內容為 UTF8 編碼，則不能用 binary 讀入（會變成亂碼？）
-
+   
       return promise;
    };
-
+   
    var uploadBlob = function(url, fData, displayDialog, callback) {
       var uploadCompleteDialog = displayDialog;
       var uploadCallback = callback;             // 2016-08-17: by PyKenny
       var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
-
+	  
+      $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.ajax({
          url: url,
          data: fData,
@@ -519,21 +524,21 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          xhr: function() {
             var xhr = $.ajaxSettings.xhr();
             xhr.upload.addEventListener("progress", function(evt) {   // upload progress
-               if (evt.lengthComputable) {
+               if (evt.lengthComputable) {  
                   var position = evt.loaded || evt.position;
                   var percentComplete_f = position / evt.total * 100;	// 20170302
                   var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
-
+				  
                   var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
                   $("#" + uploadProgressId + " .dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
                }
             }, false);     // true: event captured in capturing phase, false: bubbling phase
             // xhr.addEventListener("progress", function(evt){           // download progress
-            //    if (evt.lengthComputable) {
+            //    if (evt.lengthComputable) {  
             //       var percentComplete = evt.loaded / evt.total;
             //       //Do something with download progress
             //    }
-            //}, false);
+            //}, false); 
             return xhr;
          },
          success: function(data, status, xhr) {
@@ -569,7 +574,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       });
 	  $("#" + uploadProgressId).find(".dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
    };
-
+   
    var uploadMultipart = function(url, data) {
       var mul = buildMultipart(data);
       //alert(mul.data);
@@ -595,39 +600,39 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
       });
    };
-
+   
    var buildMultipart = function(data) {
-      var key, crunks = [], myBoundary;
+      var key, chunks = [], myBoundary;
       myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
       //while (!bound) {
       //   bound = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
       //   for (key in data) if (~data[key].indexOf(bound)) { bound = false; continue; }
       //}
       myBoundary = '(-----------docusky:' + myBoundary + ')';
-
+   
       for (var key in data){
          if (key == "file") {
-            crunks.push("--"+myBoundary+"\r\n"+
+            chunks.push("--"+myBoundary+"\r\n"+
                "Content-Disposition: form-data; name=\""+data[key].name+"\"; filename=\""+data[key].filename+"\"\r\n"+
                "Content-Type: application/octet-stream\r\n"+
                "Content-Transfer-Encoding: binary\r\n\r\n"+
                data[key].value);
          }
          else{
-            crunks.push("--"+myBoundary+"\r\n"+
+            chunks.push("--"+myBoundary+"\r\n"+
                "Content-Disposition: form-data; name=\""+data[key].name+"\"\r\n\r\n"+
                data[key].value);
          }
       }
-
+   
       return {
          myBoundary: myBoundary,
-         data: crunks.join("\r\n")+"\r\n--"+myBoundary+"--"
+         data: chunks.join("\r\n")+"\r\n--"+myBoundary+"--"
       };
    };
 
    // 動態載入 utility functions
-   //me.scriptPath = new Error().stack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
+   me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
    me.utility = docuskyWidgetUtilityFunctions;
    if (!me.initialized) init();
 
@@ -649,13 +654,13 @@ var docuskyWidgetUtilityFunctions = {
       }
       return '';
    },
-
+   
    //getScriptPath: function() {
    //   var ua = window.navigator.userAgent;
    //   var msie = ua.indexOf("MSIE ");
    //   if (msie) {
    //      // use fixed url
-   //      var pathParts = "http://docusky.org.tw/docusky/js.ui/docusky.widget.utilityFunctions.js";
+   //      var pathParts = "http://docusky.digital.ntu.edu.tw/docusky/js.ui/docusky.widget.utilityFunctions.js";
    //   }
    //   else {
    //      var errorStack = new Error().stack;
@@ -669,7 +674,7 @@ var docuskyWidgetUtilityFunctions = {
    //      file: pathParts[6]
    //   };
    //},
-
+   
    basename: function(path) {
       return path.replace(/.*[/]/, "");
    },
@@ -677,14 +682,14 @@ var docuskyWidgetUtilityFunctions = {
    dirname: function(path) {
       return path.match(/(.*)[/]/)[1];
    },
-
+   
    uniqueId: (function() {
       var counter = 0;
       return function() {
          return "_" + counter++;
       }
    })(),
-
+   
    getDateStr: function(d, separator) {
       if (typeof separator == "undefined") separator = '';
       var twoDigitsMonth = ("0" + (d.getMonth()+1)).slice(-2);      // slice(-2) to get last 2 chars
@@ -692,7 +697,7 @@ var docuskyWidgetUtilityFunctions = {
       var strDate = d.getFullYear() + separator + twoDigitsMonth + separator + twoDigitsDay;
       return strDate;
    },
-
+   
    //copyArray: function(o) {
    //   var output, v, key;
    //   output = Array.isArray(o) ? [] : {};
@@ -709,7 +714,7 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
-
+   
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
@@ -718,7 +723,7 @@ var docuskyWidgetUtilityFunctions = {
       script.defer = true;        // script will not run until after the page has loaded
       document.getElementsByTagName('head').item(0).appendChild(script);
    }
-
+ 
 };
 
 // 20170302, 20180319: CSS injection
