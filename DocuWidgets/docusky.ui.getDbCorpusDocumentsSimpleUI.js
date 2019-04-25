@@ -26,7 +26,7 @@
  *                      remove callerCallbackParameters, loginInvokeFunParameters as well as successFuncParameters in each param
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
  * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
- * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon
+ * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon and modify UI display position
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
  *
@@ -183,7 +183,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $("#" + loginContainerId).hide();
          var param = { target: 'OPEN',
                        invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
-         displayDbCorpusList(param, e);
+         displayDbCorpusList(param, me.callerEvent);
       });
 
       // 2018-10-13: providerList container
@@ -476,11 +476,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    var displayDbCorpusList = function(param, evt) {          // list all db/corpus pairs (not the corpuses under a given db)
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       $("#" + loginContainerId).hide();
-
       // show loading icon
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      $("#" + loadingContainerId).position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"}).show();
+      $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});
       $("#" + workingProgressId).html("connecting");
 
       var dbCorpusListContentId = me.idPrefix + "dbCorpusListContent" + me.uniqueId;
