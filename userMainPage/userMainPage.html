@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.1.2/css/fixedHeader.dataTables.min.css">
     <script src="https://cdn.datatables.net/fixedheader/3.1.2/js/dataTables.fixedHeader.min.js"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
     <script src="./userMainPage.js"></script>
     <style>
       body{
@@ -97,7 +98,7 @@
       <div style="position: sticky; left: 0px; border-radius: 4px; z-index:999;">
         <div>
           <span class="form-control-plaintext text-left" style="width:auto">
-            <a href="./manual.pdf"><i title="manual" class="mx-2 h3 fas fa-book-medical"></i></a>
+            <a href="./manual.pdf" target="_blank"><i title="manual" class="mx-2 h3 fas fa-book-medical"></i></a>
           </span>
           <button type="button" class="btn btn-primary btn-block" onclick="$('#DocManage').show();$('#JsonManage').hide();GetCorpus();$('#DocManageTable').DataTable().columns.adjust().draw();">文獻集管理 <i class="fas fa-sync-alt"></i></button>
           <button type="button" class="btn btn-success btn-block" onclick="$('#JsonManage').show();$('#DocManage').hide();GetJson();$('#JsonManageTable').DataTable().columns.adjust().draw();">Json 管理 <i class="fas fa-sync-alt"></i></button>
