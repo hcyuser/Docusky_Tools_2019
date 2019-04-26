@@ -185,7 +185,7 @@ function  PrintDocManageTable(AllCorpus){
     if(CorpusGroup[ DB ].length==1){
       TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXml("`+DB+`", "`+CorpusGroup[ DB ][CorpusIndex]+`")'>下載</button></td></tr>`;
     }else{
-      TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  </td></tr>`;
+      TablePrefix += `<td> <button type="button" onclick='renameDBDialogContent("`+DB+`")'>重新命名</button> <button type="button" onclick='deleteXML("`+DB+`")'>刪除</button>  <button type="button" onclick='downloadDocuXmlSwitchCorpus("`+DB+`", "`+CorpusGroup[ DB ]+`")'>下載</button></td></tr>`;
     }
 
   }
@@ -224,6 +224,18 @@ function  PrintDocManageTable(AllCorpus){
       DocManageTableOption.pageLen = len;
       //console.log( 'New page length: '+len );
   });
+
+
+}
+
+function downloadDocuXmlSwitchCorpus(db, corpusArr){
+  corpusArr = corpusArr.split(",");
+  let outputHtml = "";
+  for(corpus in corpusArr){
+    outputHtml += `<button class="btn btn-light" onclick='downloadDocuXml("`+db+`","`+corpusArr[corpus]+`");$("#downloadDocuXmlSwitchCorpus").modal("hide");'>`+corpusArr[corpus]+`<button>`;
+  }
+  $('#downloadDocuXmlSwitchCorpus .modal-dialog .modal-content .modal-body .text-center').html(outputHtml);
+  $('#downloadDocuXmlSwitchCorpus').modal('show');
 
 
 }
