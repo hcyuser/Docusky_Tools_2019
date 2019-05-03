@@ -10,19 +10,19 @@
  * @version
  * 0.01 (May xx 2016)
  * 0.02 (August xx 2016)
- * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts) 
+ * 0.03 (January 23 2017) fix css class name (adds prefix 'dsw-' to better avoid naming conflicts)
  * 0.04 (March 01 2017) add simple message for upload progress
  * 0.05 (July 07 2017) bugs fix: apply encodeURIComponent() to category/pathfile
  * 0.06 (July 28 2017) set "private" methods
  * 0.07 (July 31 2017) modify the arguments of jsonTransporter.storeJson(), add hideWidget()
  * 0.08 (Nov 27 2017) add renameDataFile()
  * 0.09 (January 30 2018) expose login(), add withCredentials
- * 
+ *
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
  * @license
- * 
+ *
  */
 
 if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
@@ -31,11 +31,11 @@ if (window.navigator.userAgent.indexOf("MSIE ") > 0) {
 
 var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    var me = this;                                               // store object reference
-   
+
    me.package = 'docusky.ui.manageDataFileListSimpleUI.js';   // 主要目的：取得 data file list，並讓使用者可上載或刪除 data files
    me.version = 0.09;
    me.idPrefix = 'DataFile_';                                 // 2016-08-13
-   
+
    me.utility = null;
    me.protocol = null;                                        // 'http',
    me.urlHostPath = null;
@@ -48,16 +48,18 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    me.urlLogin = null;
    me.urlLogout = null;
    me.username = '';
-   me.loginCallback = null;               // 儲存當前欲執行的函式（成功登入後將自動呼叫）
-   me.callerEvent = null; 
+   me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
    me.categoryFilenameList = [];          // 儲存 category => filenames 的物件
    me.fileName = '';                      // 欲上傳檔案（在本地）的名稱
    me.fileData = '';                      // 欲上傳檔案的內容
-   
    me.displayWidget = true;               // 2017-07-31
-   
+   me.uiState = {};                       // 2019-04-29: uiState[dbCorpusListContainerId] = {size: { width:w, height: h}}
+   me.Error = null; //all scope error handle
+   me.maxResponseTimeout = 300000;
+   me.maxRetryCount = 10;
+   me.presentRetryCount = 0;
    me.jsonTransporter = {                 // 利用此物件的 jsonObj 在 client-server 之間傳遞 json 物件
       category: 'unknown',
       datapath: 'unknown',
@@ -65,17 +67,17 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       jsonObj: null,
       serverCode: 0,
       serverMessage: '',
-      
+
       // 利用此函式存取 Json -- 注意 storeJson 和 retrieveJson 字面的 "Json" 指的是以 JSON 儲存到 DocuSky，
       //                        函式的 json 參數都是物件型態（而非字串）
-      storeJson: function(category, datapath, filename, jsonObj, callback) {
+      storeJson: function(category, datapath, filename, jsonObj, succFunc, failFunc) {
          // 2017-07-30: 舊的方式傳入 (json, callback) 兩參數，但與 retrieveJson(category, datapath, filename, callback)不對稱
          //             為了保持相容，且讓參數對稱，在此對 arguments 進行檢查：若參數數量小於等於 2，使用舊方式維持相容性；否則採用新參數
          if (arguments.length <= 2) {              // (jsonObj, callback)
             var transporter = this;
             transporter.jsonObj = arguments[0];
             var jsonStr = JSON.stringify(transporter.jsonObj);
-            var callback = (arguments.length == 2) ? arguments[1] : null;
+            var succFunc = (arguments.length == 2) ? arguments[1] : null;
             var category = transporter.category;   // 舊的方式，利用物件屬性傳遞儲存位置
             var datapath = transporter.datapath;
             var filename = transporter.filename;
@@ -85,14 +87,15 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             var datapath = arguments[1];
             var filename = arguments[2];
             var jsonStr = JSON.stringify(arguments[3]);
-            var callback = (arguments.length >= 5) ? arguments[4] : null;
+            var succFunc = (arguments.length >= 5) ? arguments[4] : null;
+            var failFunc = (arguments.length >= 6) ? arguments[5] : null;
          }
 
-         // get parameters from parent         
+         // get parameters from parent
          if (me.urlSaveDataFileJson === null) init();
          var url = me.urlSaveDataFileJson;
          //alert(url);
-         
+
          var fd = new FormData();
          fd.append('uploadDataCategory', category);
          fd.append('uploadDataPath', datapath);
@@ -103,10 +106,12 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          var blob = new Blob([jsonStr]);
          //alert(me.fileData.length + ':' + blob.size);
          fd.append('importedFiles[]', blob);
-         uploadBlob(url, fd, false, callback);    // false: disable dialog
+
+         uploadBlob(url, fd, false, succFunc, failFunc);  // false: disable dialog
+
       },
-      
-      retrieveJson: function(category, datapath, filename, callback) {
+
+      retrieveJson: function(category, datapath, filename, succFunc, failFunc) {
          var transporter = this;
          transporter.category = category;
          transporter.datapath = datapath;
@@ -116,27 +121,97 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          url += "?" + parameters;
          $.ajaxSetup({xhrFields: {withCredentials: true}});
          $.getJSON(url, function(data) {
-            transporter.jsonObj = data;
-            if (typeof callback === 'function') callback();
+            if(data){
+              transporter.jsonObj = data;
+              if (typeof succFunc === 'function') succFunc();
+            }
+            else{
+              console.error("Server Error");
+              if (typeof failFunc === "function"){
+                failFunc();
+              }
+              else if(typeof me.Error === "function"){
+                me.Error("Server Error");
+              }
+              else {
+                alert("retrieveJson Error");
+              }
+            }
+
          });
       },
-      
+
       // 2017-07-31
-      deleteDataFile: function(category, datapath, filename, callback) {
+      deleteDataFile: function(category, datapath, filename, succFunc, failFunc) {
          var transporter = this;
          var url = me.urlDeleteDataFileJson;
-         var parameters = "category=" + encodeURIComponent(category) 
+         var parameters = "category=" + encodeURIComponent(category)
                         + "&pathfile=" + encodeURIComponent(datapath + "/" + filename);
          url += "?" + parameters;
+
          $.ajaxSetup({xhrFields: {withCredentials: true}});
-         $.getJSON(url, function(data) {
-            transporter.jsonObj = data;
-            if (typeof callback === 'function') callback();
+         $.get(url, function(data) {
+            if(data.code == 0){
+              transporter.jsonObj = data;
+              if (typeof succFunc === 'function') succFunc();
+            }
+            else{
+              console.error("Server Error");
+              if (typeof failFunc === "function"){
+                failFunc();
+              }
+              else if(typeof me.Error === "function"){
+                me.Error("Server Error");
+              }
+              else {
+                alert("deleteDataFile Error");
+              }
+            }
+
+         })
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let retry = function(){
+                    me.jsonTransporter.deleteDataFile(category, datapath, filename, succFunc, failFunc);
+                  }
+                  setTimeout(retry,3000);
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
          });
       },
-      
+
       // 2016-08-12: v0.02
-      listCategoryDataFiles: function(category, datapath, callback) {
+      listCategoryDataFiles: function(category, datapath, succFunc, failFunc) {
          var transporter = this;
          if (datapath == "*") datapath = "";
          var catpath = category + '/' + datapath;
@@ -144,29 +219,135 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          var parameters = "catpath=" + catpath;
          url += "?" + parameters;
          $.ajaxSetup({xhrFields: {withCredentials: true}});
-         $.getJSON(url, function(data) {
-            transporter.jsonObj = data;
-            if (typeof callback === 'function') callback();
+         $.get(url, function(data) {
+           if(data.code == 0){
+             transporter.jsonObj = data;
+             if (typeof succFunc === 'function') succFunc();
+           }
+           else{
+             console.error("Server Error");
+             if (typeof failFunc === "function"){
+               failFunc();
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Server Error");
+             }
+             else {
+               alert("listCategoryDataFiles Error");
+             }
+           }
+         })
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let retry = function(){
+                    me.jsonTransporter.listCategoryDataFiles(category, datapath, succFunc, failFunc);
+                  }
+                  setTimeout(retry,3000);
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
          });
       },
-      
+
       // 2017-11-27: v0.08 (currently not support renaming category and datapath ==> assuming tools need these names to find their data files)
-      renameDataFile: function(category, datapath, fromFilename, toFilename, callback) {
+      renameDataFile: function(category, datapath, fromFilename, toFilename, succFunc, failFunc) {
          var transporter = this;
          var url = me.urlRenameDataFileJson;
-         var parameters = "category=" + encodeURIComponent(category) 
+         var parameters = "category=" + encodeURIComponent(category)
                         + "&filepath=" + encodeURIComponent(datapath)
                         + "&fromFilename=" + encodeURIComponent(fromFilename)
                         + "&toFilename=" + encodeURIComponent(toFilename);
          url += "?" + parameters;
          $.ajaxSetup({xhrFields: {withCredentials: true}});
-         $.getJSON(url, function(data) {
-            transporter.jsonObj = data;
-            if (typeof callback === 'function') callback();
+         $.get(url, function(data) {
+            if(data.code == 0){
+              transporter.jsonObj = data;
+              if (typeof succFunc === 'function') succFunc();
+            }
+            else{
+              console.error("Server Error");
+              if (typeof failFunc === "function"){
+                failFunc();
+              }
+              else if(typeof me.Error === "function"){
+                me.Error("Server Error");
+              }
+              else {
+                alert("deleteDataFile Error");
+              }
+            }
+         })
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let retry = function(){
+                    me.jsonTransporter.renameDataFile(category, datapath, fromFilename, toFilename, succFunc, failFunc);
+                  }
+                  setTimeout(retry,3000);
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
          });
       },
    };
-   
+
    // =================================
    //       main functions
    // =================================
@@ -175,7 +356,10 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       //var scriptPath = me.utility.getScriptPath();
       //me.urlHostPath = scriptPath.protocol + '://' + scriptPath.host + '/' + me.utility.dirname(scriptPath.path) + '/webApi';
       // 注意： 由於利用 jQuery 動態載入 utility functions，call stack 最後會是在 jQuery 函式，因此不能從 me.utility.getScriptPath() 取得 script URL
-      me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy')) + '/webApi';
+      let scheme = location.protocol.substr(0, location.protocol.length-1);
+      if (scheme == 'file') me.urlHostPath = "https://docusky.org.tw/docusky/webApi";
+      else me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy')) + '/webApi';// e.g., http://localhost:8000/PHP5/DocuSky
+      //me.urlHostPath = me.utility.dirname(me.utility.dirname(me.scriptPath + 'dummy')) + '/webApi';
       me.urlGetAllCategoryDataFilenamesJson =  me.urlHostPath + '/getAllCategoryDataFilenamesJson.php';
       me.urlGetCategoryDataFilenamesJson =  me.urlHostPath + '/getDataFilenamesUnderCatpathJson.php';
       me.urlSaveDataFileJson =  me.urlHostPath + '/saveDataFileByHttpPostJson.php';
@@ -188,14 +372,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
       me.uniqueId = me.utility.uniqueId();
 
-      // login container      
+      // login container
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       var closeLoginContainerId = me.idPrefix + "closeLoginContainer" + me.uniqueId;
       var dsUsernameId = me.idPrefix + "dsUsername" + me.uniqueId;
       var dsPasswordId = me.idPrefix + "dsPassword" + me.uniqueId;
       var loginSubmitId = me.idPrefix + "loginSubmit" + me.uniqueId;
       var loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
-      
+
       var s = "<div id='" + loginContainerId + "' class='dsw-container'>"
             + "<div class='dsw-titleBar'><table><tr><td class='dsw-titleContainer'><div class='dsw-titlename'>DocuSky Login</div></td><td class='dsw-closeContainer' id='" + closeLoginContainerId + "'><div class='dsw-btn-close'>&#x2716;</div></td></tr></table></div>"
             + "<div class='dsw-containerContent'>"
@@ -218,7 +402,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       $("#" + closeLoginContainerId).click(function(e) {
          $("#" + loginContainerId).hide();
       });
-      
+
       var filenameListContainerId = me.idPrefix + "filenameListContainer" + me.uniqueId;
       var spanUsernameId = me.idPrefix + "spanUsername" + me.uniqueId;
       var filenameListContentId = me.idPrefix + "filenameListContent" + me.uniqueId;
@@ -231,14 +415,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       var logoutAnchorId = me.idPrefix + "logoutAnchor" + me.uniqueId;
       var closefilenameListId = me.idPrefix + "closefilenameList" + me.uniqueId;
       var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;	// 20170302
-	  
+
       // filenameListContainer container
       var myVer = me.package + " - Ver " + me.version;
       var t = "登出";
       var s = "<div id='" + filenameListContainerId + "' class='dsw-container'>"
-            + "<div class='dsw-titleBar'>" 
+            + "<div class='dsw-titleBar'>"
             + "<table><tr><td class='dsw-titleContainer'><div class='dsw-titlename' title='" + myVer + "'>DataFile List</div></td>"
-            + "<td class='dsw-closeContainer'>" + "<div class='dsw-btn-close' id='" + closefilenameListId + "'>&#x2716;</div>" + "<span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span>" + "<span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span>" + "</td>" + "</tr></table>" 
+            + "<td class='dsw-closeContainer'>" + "<div class='dsw-btn-close' id='" + closefilenameListId + "'>&#x2716;</div>" + "<span class='dsw-btn-logout' id='" + logoutAnchorId + "'>Logout</span>" + "<span class='dsw-useridContainer'><span class='dsw-userid' id='" + spanUsernameId + "'>" + me.username + "</span></span>" + "</td>" + "</tr></table>"
             + "</div>"
             + "<div id='" + filenameListContentId + "' class='dsw-containerContent'>"
             + "</div>"
@@ -250,16 +434,16 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             + "<tr><td>指定欲儲存的位置：</td>"
             + "<td>類別：<input type='text' class='dsw-userinput' id='" + uploadDataCategoryId + "' name='uploadDataCategory' value='Default'></input></td>"
             + "<td>路徑：<input type='text' class='dsw-userinput' id='" + uploadDataPathId + "' name='uploadDataPath' size='20' value='Default'></input></td>"
-            + "</tr><tr>" 
+            + "</tr><tr>"
             + "<td colspan='2'><div class='dsw-uploadprogressbar' id='" + uploadProgressId + "'><div class='dsw-uploadprogressbar-progress'></div></div></td>"
-            + "<td align='right'><button id='" + uploadFormSubmitId + "'>開始上傳</button></td></tr>"
+            + "<td align='right'><button id='" + uploadFormSubmitId + "' disabled='disabled'>開始上傳</button></td></tr>"
             + "</table>"
             + "</div>"
             + "</form></div>";
             + "</div>";
       $("html").append(s);
       $("#" + filenameListContainerId).hide();
-      
+
       $("#" + logoutAnchorId).click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -279,14 +463,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       $("#" + closefilenameListId).click(function(e) {
          $("#" + filenameListContainerId).hide();
       });
-      
+
       $("#" + uploadFormSubmitId).click(function(e) {
          e.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
          var url = me.urlSaveDataFileJson;
-         
+
          var uploadDataCategoryId = me.idPrefix + "uploadDataCategory" + me.uniqueId;
          var uploadDataPath = me.idPrefix + "uploadDataPath" + me.uniqueId;
-         
+
          var fd = new FormData();
          fd.append('uploadDataCategory', $("#" + uploadDataCategoryId).val());
          fd.append('uploadDataPath', $("#" + uploadDataPathId).val());
@@ -297,18 +481,17 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          //alert(me.fileData.length + ':' + blob.size);
          fd.append('importedFiles[]', blob);
          uploadBlob(url, fd, true, null);       // true: enable dialog display
-         
+
          //// HTTP POST with multipart -- but, XmlHttp has some restrictions on sending binary data!
          //var formData = $("#uploadForm").serializeArray();
          //var nameVal = $("#uploadDataFilenameSelected").attr("name");     // <input type="file" name="...">
          //formData.file = {value: me.fileData, filename: me.fileName, name:nameVal};
-         //uploadMultipart(url, formData);
       });
-      
+
       me.initialized = true;
    };
-   
-   me.login = function(username, password) {
+
+   me.login = function(username, password, succFunc, failFunc) {
       //$.ajaxSetup({async:false});
       var postdata = { dsUname: username, dsPword: password };     // camel style: to get dbCorpusDocuments
       $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -319,26 +502,80 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          if (jsonObj.code == 0) {         // successfully login
            $("#" + loginMessageId).empty();    // 成功登入，清除（先前可能有的）訊息
            $("#" + loginContainerId).fadeOut();
-           me.manageDataFileList(me.callerEvent, me.callerCallback);
+           if (typeof succFunc === 'function') succFunc(jsonObj.message);    // 2019-05-02
+           else me.manageDataFileList(me.callerEvent, me.callerCallback);
          }
          else if (jsonObj.code == 101) ;     // Requires login
          else {
-            $("#" + loginMessageId).html(jsonObj.code + ': ' + jsonObj.message);
+             console.error("Login Error");
+             if (typeof failFunc === 'function'){
+               failFunc(jsonObj);
+             }
+             else if(typeof me.Error === "function"){
+               me.Error("Login Error");
+             }
+             else {
+               $("#" + loginMessageId).html(jsonObj.code + ': ' + jsonObj.message);
+             }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+         if (typeof failFunc === "function") {
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             me.Error("Server Error");
+           }
+           else{
+             me.Error("Connection Error");
+           }
+         }
+         else{
+          let loginMessageId = me.idPrefix + "loginMessage" + me.uniqueId;
+          let loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
+          $("#" + loginContainerId).show();
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            $("#" + loginMessageId).html("Server Error");
+          }
+          else{
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              $("#" + loginMessageId).html("Connection Error");
+              let retry = function(){
+                me.login(username, password, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
+            }
+            else{
+              $("#" + loginMessageId).html("Please check your Internet connection and refresh this page.");
+            }
+
+          }
+
+
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
-   
+
    // 繪製 DataFileList 的表格
    var displayFilenameList = function() {     // category => filelist
       var editableContentBackup = null;
       var categoryFilenameList = me.categoryFilenameList;
       //alert(JSON.stringify(categoryFilenameList, null, '\t'));
-      
+
       var contentTableId = me.idPrefix + "contentTable" + me.uniqueId;
       var filenameListContentId = me.idPrefix + "filenameListContent" + me.uniqueId;
       var uploadDataFilenameSelectedId = me.idPrefix + "uploadDataFilenameSelected" + me.uniqueId;
-      
+
       var s = "<table class='dsw-filenameList' id='" + contentTableId + "'>";
       var itemNumber = 0;
       for (var category in categoryFilenameList) {
@@ -353,7 +590,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             var categoryEncoded = encodeURIComponent(category);                         // 20170707
             var pathfileEncoded = encodeURIComponent(pathfile);                         // 20170707
             var catpathfileEncoded = encodeURIComponent(category + "/" + pathfile);     // 20170730
-            s += "<tr><td class='dsw-filenameList-id'>" + itemNumber + ".</td>"
+            s += "<tr class='dsw-tr-datafilelist'><td class='dsw-filenameList-id'>" + itemNumber + ".</td>"
                + "<td class='dsw-filenameList-category' title='" + category + "'>" + category + "</td>"
                + "<td class='dsw-filenameList-path' title='" + path + "'>" + path + "</td>"
                + "<td class='dsw-filenameList-filename' x-category='" + category + "' x-path='" + path + "' title='" + filename + "'>" + filename + "</td>"
@@ -363,9 +600,9 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
       }
       s += "</table>";
-      
+
       $("#" + filenameListContentId).html(s);
-      
+
       $(".dsw-filenameList-filename").on("dblclick", function() {
          $(this).attr("contentEditable", "true");
          editableContentBackup = $(this).text();
@@ -394,8 +631,8 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
          else ;      // same content ==> does nothing
       });
-      
-      
+
+
       var h = $("#" + contentTableId).height();
       $("#" + filenameListContentId).height(Math.min(280,Math.max(h,50)));
 
@@ -406,10 +643,12 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          readFile(files[0]).done(function(fileData){
             me.fileData = fileData;
             //alert(me.fileData.length);
+            let uploadFormSubmitId = me.idPrefix + "uploadFormSubmit" + me.uniqueId;
+            $("#" + uploadFormSubmitId).prop('disabled', false);
          });
          //me.urlSaveDataFileJson
       });
-      
+
       $(".deleteFile").click(function(e) {
          e.preventDefault();
          $.ajaxSetup({xhrFields: {withCredentials: true}});
@@ -425,15 +664,32 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             }
          }, 'json');
       });
+
+      //2019-04-29
+      var filenameListContainerId = me.idPrefix + "filenameListContainer" + me.uniqueId;
+      me.uiState[filenameListContainerId] = {};
+      me.uiState[filenameListContainerId].size = {};
+      me.uiState[filenameListContainerId].size.height = $("#"+filenameListContainerId).height();
+      me.uiState[filenameListContainerId].size.width = $("#"+filenameListContainerId).width();
+      $("#"+filenameListContainerId).draggable({
+         containment: 'window',
+         handle: '.dsw-titleBar'
+      });
+      /*.resizable({
+         alsoResize: "#"+filenameListContainerId,
+         handles: 'e, w'
+         minWidth: me.uiState[filenameListContainerId].size.width,
+         minHeight: me.uiState[filenameListContainerId].size.height
+      });*/
+
    };
-   
+
    // 顯示 DataFileList 的 container
-   me.manageDataFileList = function(evt, successFunc) {
+   me.manageDataFileList = function(evt, succFunc, failFunc) {
       if (!me.initialized) init();
-      
+
       me.callerEvent = evt;
-      me.callerCallback = successFunc;
-      me.loginCallback = me.getDbCorpusDocuments;
+      me.callerCallback = succFunc;
 
       // 決定顯示的位置
       var winWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -449,7 +705,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          if (data.code == 0) {          // successfully get db list
             if (me.displayWidget) {
                var jelement = $("#" + filenameListContainerId);
-               var w = jelement.width(600);                                // 2018-03-21
+               var w = jelement.width(800);                                // 2018-03-21
                var h = jelement.height();
                var overX = Math.max(0, evt.pageX - 40 + w - winWidth);     // 超過右側邊界多少 pixels
                var posLeft = Math.max(10, evt.pageX - overX - 40);
@@ -474,9 +730,65 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             jelement.show();
          }
          else {
-            alert("Error: " + data.code + "\n" + data.message);
+             console.error("Server Error");
+             if (typeof failFunc === "function") {
+                me.hideWidget(me.displayWidget);
+                failFunc();
+             }
+             else if(typeof me.Error === "function"){
+                me.hideWidget(me.displayWidget);
+                me.Error("Server Error");
+             }
+             else{
+               alert("Error: " + data.code + "\n" + data.message);
+             }
          }
-      }, 'json');
+      }, 'json')
+      .fail(function (jqXHR, textStatus, errorThrown){
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+          }
+          else{
+            console.error("Connection Error");
+          }
+
+         if (typeof failFunc === "function") {
+            me.hideWidget(me.displayWidget);
+            failFunc();
+         }
+         else if(typeof me.Error === "function"){
+            me.hideWidget(me.displayWidget);
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+              me.Error("Server Error");
+            }
+            else{
+              me.Error("Connection Error");
+            }
+
+         }
+         else{
+
+          if(jqXHR.status=="404" || jqXHR.status=="403"){
+             alert("Server Error");
+          }else{
+            if(me.presentRetryCount < me.maxRetryCount){
+              me.presentRetryCount++;
+              alert("Connection Error");
+              let retry = function(){
+                //$.ajaxSetup({xhrFields: {withCredentials: true}});
+                //$.ajax(this); //occur CORS
+                me.manageDataFileList(evt, succFunc, failFunc);
+              }
+              setTimeout(retry,3000);
+            }
+            else{
+              alert("Please check your Internet connection and refresh this page.");
+            }
+          }
+
+         }
+
+      });
       //$.ajaxSetup({async:true});
    };
 
@@ -490,55 +802,56 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          $("#" + loginContainerId).hide();
       }
    };
-   
+
    // for multipart file upload
    var readFile = function(file) {
       var loader = new FileReader();
       var def = $.Deferred(), promise = def.promise();
-   
+
       //--- provide classic deferred interface
       loader.onload = function (e) { def.resolve(e.target.result); };
       loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
       loader.onerror = loader.onabort = function (e) { def.reject(e); };
       promise.abort = function () { return loader.abort.apply(loader, arguments); };
-   
+
       loader.readAsBinaryString(file);
       //loader.readAsText(file,'UTF-8');         // 若內容為 UTF8 編碼，則不能用 binary 讀入（會變成亂碼？）
-   
+
       return promise;
    };
-   
-   var uploadBlob = function(url, fData, displayDialog, callback) {
+
+   var uploadBlob = function(url, fData, displayDialog, succFunc, failFunc) {
       var uploadCompleteDialog = displayDialog;
-      var uploadCallback = callback;             // 2016-08-17: by PyKenny
+      var uploadCallback = succFunc;             // 2016-08-17: by PyKenny
       var uploadProgressId = me.idPrefix + "uploadProgress" + me.uniqueId;
-	  
+
       $.ajaxSetup({xhrFields: {withCredentials: true}});
       $.ajax({
          url: url,
          data: fData,
          processData: false,      // tell jquery not to process data
+         timeout: me.maxResponseTimeout,
          type: "post",
          //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
          contentType: false,      // set false to let jquery specify multipart parameter
          xhr: function() {
             var xhr = $.ajaxSettings.xhr();
             xhr.upload.addEventListener("progress", function(evt) {   // upload progress
-               if (evt.lengthComputable) {  
+               if (evt.lengthComputable) {
                   var position = evt.loaded || evt.position;
                   var percentComplete_f = position / evt.total * 100;	// 20170302
                   var percentComplete_i = Math.ceil(percentComplete_f);	// 20170302
-				  
+
                   var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
                   $("#" + uploadProgressId + " .dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
                }
             }, false);     // true: event captured in capturing phase, false: bubbling phase
             // xhr.addEventListener("progress", function(evt){           // download progress
-            //    if (evt.lengthComputable) {  
+            //    if (evt.lengthComputable) {
             //       var percentComplete = evt.loaded / evt.total;
             //       //Do something with download progress
             //    }
-            //}, false); 
+            //}, false);
             return xhr;
          },
          success: function(data, status, xhr) {
@@ -549,58 +862,54 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
                   me.manageDataFileList(me.callerEvent, me.callerCallback);
                }
                else {     // 2016-08-12: v0.02
-                  if (typeof uploadCallback === 'function'){
-                     uploadCallback(data);
-				  }
+                  if (typeof succFunc === "function"){
+                     succFunc(data);
+				          }
                }
             }
             else {	// error occurs in docusky
-               if (typeof uploadCallback === 'function'){
-				      uploadCallback(data);
-			      }
-               // alert("Upload Error: " + data.code + "\n" + data.message);
+               console.error("Server Error");
+               if (typeof failFunc === 'function'){
+				             failFunc(data);
+			         }
+               else if(typeof me.Error === "function"){
+                  me.Error("Server Error");
+               }
+               else{
+                 alert("Error: " + data.code + "\n" + data.message);
+               }
             }
             $("#" + uploadProgressId).hide();	// 20170302
          },
          error: function(xhr, status, error) {	// error occurs in ajax request
             $("#" + uploadProgressId).hide();	// 20170302
-			if (typeof uploadCallback === 'function'){
-			   uploadCallback(error);
-			}
-			//var err = eval("(" + xhr.responseText + ")");
-            // alert(error);
-            //ert(xhr.responseText);
+
+            console.error("Connection Error");
+            if (typeof failFunc === "function") {
+              failFunc(error);
+            }
+            else if(typeof me.Error === "function"){
+              me.Error("Connection Error");
+            }
+            else{
+              if(me.presentRetryCount < me.maxRetryCount){
+                me.presentRetryCount++;
+                alert("Connection Error");
+                let retry = function(){
+                  uploadBlob(url, fData, displayDialog, succFunc, failFunc);
+                }
+                setTimeout(retry,3000);
+              }
+              else{
+                alert("Please check your Internet connection and refresh this page.");
+              }
+            }
+
          }
       });
 	  $("#" + uploadProgressId).find(".dsw-uploadprogressbar-progress").text("").css("width", "0%").end().show();	// 20170302
    };
-   
-   var uploadMultipart = function(url, data) {
-      var mul = buildMultipart(data);
-      //alert(mul.data);
-      $.ajax({
-         url: url,
-         data: mul.data,
-         processData: false,      // tell jquery not to process data
-         type: "post",
-         //async: false,          // not supported in CORS (Cross-Domain Resource Sharing)
-         contentType: "multipart/form-data; boundary="+mul.myBoundary,
-         success: function(data, status, xhr) {
-            if (data.code == 0) {          // successfully get db list
-               alert(data.message);
-            }
-            else {
-               alert("Upload Error: " + data.code + "\n" + data.message);
-            }
-         },
-         error: function(xhr, status, error) {
-            //var err = eval("(" + xhr.responseText + ")");
-            alert(error);
-            //ert(xhr.responseText);
-         }
-      });
-   };
-   
+
    var buildMultipart = function(data) {
       var key, chunks = [], myBoundary;
       myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
@@ -609,7 +918,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       //   for (key in data) if (~data[key].indexOf(bound)) { bound = false; continue; }
       //}
       myBoundary = '(-----------docusky:' + myBoundary + ')';
-   
+
       for (var key in data){
          if (key == "file") {
             chunks.push("--"+myBoundary+"\r\n"+
@@ -624,7 +933,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
                data[key].value);
          }
       }
-   
+
       return {
          myBoundary: myBoundary,
          data: chunks.join("\r\n")+"\r\n--"+myBoundary+"--"
@@ -654,7 +963,7 @@ var docuskyWidgetUtilityFunctions = {
       }
       return '';
    },
-   
+
    //getScriptPath: function() {
    //   var ua = window.navigator.userAgent;
    //   var msie = ua.indexOf("MSIE ");
@@ -674,7 +983,7 @@ var docuskyWidgetUtilityFunctions = {
    //      file: pathParts[6]
    //   };
    //},
-   
+
    basename: function(path) {
       return path.replace(/.*[/]/, "");
    },
@@ -682,14 +991,14 @@ var docuskyWidgetUtilityFunctions = {
    dirname: function(path) {
       return path.match(/(.*)[/]/)[1];
    },
-   
+
    uniqueId: (function() {
       var counter = 0;
       return function() {
          return "_" + counter++;
       }
    })(),
-   
+
    getDateStr: function(d, separator) {
       if (typeof separator == "undefined") separator = '';
       var twoDigitsMonth = ("0" + (d.getMonth()+1)).slice(-2);      // slice(-2) to get last 2 chars
@@ -697,7 +1006,7 @@ var docuskyWidgetUtilityFunctions = {
       var strDate = d.getFullYear() + separator + twoDigitsMonth + separator + twoDigitsDay;
       return strDate;
    },
-   
+
    //copyArray: function(o) {
    //   var output, v, key;
    //   output = Array.isArray(o) ? [] : {};
@@ -714,7 +1023,7 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
-   
+
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
@@ -723,18 +1032,18 @@ var docuskyWidgetUtilityFunctions = {
       script.defer = true;        // script will not run until after the page has loaded
       document.getElementsByTagName('head').item(0).appendChild(script);
    }
- 
+
 };
 
 // 20170302, 20180319: CSS injection
 $('head').append('<style id="dsw-simplecomboui">'
 	+ 'div.dsw-container { position:absolute; border:#4F4F4F solid 3px; background-color:#EFEFEF; border-radius:4px; display:inline-block; font-family: "Arial","MingLiU"; font-size: 16px; z-index:1001 }'
 	+ 'div.dsw-titleBar { background-color:#4F4F4F; color:white; z-index:1001; padding: 6px; line-height: 16px; }'
-	+ 'div.dsw-containerContent { padding: 6px; overflow-x:hidden; overflow-y:auto; font-size:medium; z-index:1001 }'
+	+ 'div.dsw-containerContent { padding: 6px; overflow-x:scroll; overflow-y:auto; font-size:medium; z-index:1001 }'
 	+ '.dsw-titleBar table,.dsw-containerContent table { width: 100%; line-height:1.3em; border-collapse: collapse; border-spacing:0; }'
 	+ 'table.dsw-tableDbCorpuslist { width:100%; margin-right: 16px; border-collapse: collapse; border-spacing: 0; font-size:medium; line-height:1.3em; color:#2F2F3F; }'
-	+ 'tr.dsw-tr-dbcorpuslist:nth-child(even) { background: #DFDFDF; line-height:1.3em; }'
-	+ 'tr.dsw-tr-dbcorpuslist:nth-child(odd)  { background: #FFFFFF; line-height:1.3em; }'
+	+ 'tr.dsw-tr-datafilelist:nth-child(even) { background: #DFDFDF; line-height:1.3em; }'
+	+ 'tr.dsw-tr-datafilelist:nth-child(odd)  { background: #FFFFFF; line-height:1.3em; }'
    + '.dsw-titleContainer { width: 60%; padding: 0; }'
    + '.dsw-closeContainer { position: relative; text-align: right; direction: rtl; padding: 0; }'
    + '.dsw-titlename { display: inline-block; line-height: 16px; white-space: nowrap; }'
@@ -762,7 +1071,7 @@ $('head').append('<style id="dsw-simplecomboui">'
    + '.dsw-filenameList-id {}'	// Let ID automatically adjust width
    + '.dsw-filenameList-download,.dsw-filenameList-delete { width: 45px; max-width: 45px; text-align: center; }'
    + '.dsw-filenameList-category { font-weight: bold; min-width: 120px; max-width: 150px; }'
-   + '.dsw-filenameList-path { min-width: 450px; max-width: 550px; }'
+   + '.dsw-filenameList-path { min-width: 120px; max-width: 150px; }'
    + '.table.dsw-uploadfile{ width: 100%; border-collapse: collapse; border-spacing: 0; }'
    + '.dsw-uploadfile td { padding: 0; }'
    + '.dsw-td-dbList { padding: 0.25rem; }'

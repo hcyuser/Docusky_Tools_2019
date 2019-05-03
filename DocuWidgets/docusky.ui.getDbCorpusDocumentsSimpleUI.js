@@ -27,6 +27,7 @@
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
  * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
  * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon and modify UI display position
+ *
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
  *
