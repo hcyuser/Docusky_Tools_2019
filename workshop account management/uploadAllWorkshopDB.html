@@ -1,0 +1,241 @@
+
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+   <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <script src="https://docusky.org.tw/docusky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
+   <style type="text/css">
+      body { margin: 0; line-height:150%; font-family: Microsoft JhengHei;}
+      div.headerBar { background-color:brown; color:white; padding:8px; text-align: center; }
+      #content {
+        width: 90%;
+        margin: 10px auto;
+      }
+   </style>
+
+
+</head>
+<body>
+<div id="headerBar" class="headerBar">
+      Workshop 帳號文獻集上傳工具
+</div>
+<div id="content">
+     <div>
+         <table border="0" width="100%" cellpadding="0" cellspacing="0">
+         <tr><td><nobr>說明：</nobr></td>
+             <td width="96%" align="left">
+               這是一個可以上傳文獻集到所有 workshop 帳號的工具，請小心使用。<br>
+             </td>
+         </tr>
+         </table>
+     </div>
+</div>
+<table border="0" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="96%" align="center">
+      帳號： workshop <input type="text" id="frontInput"/> 到 workshop <input type="text" id="endInput"/> <button id="generateAccountBTN">產生帳號</button>
+
+    </td>
+  </tr>
+  <tr>
+    <td width="96%" align="center">
+      資料庫名稱：<input type="text" style='width: auto' id="uploadDBName" placeholder="Default"> <br>
+      <label style="text-align:left; width: auto">上載單份 DocuXml 檔以建構文字資料庫（檔案大小上限 120 MB）:</label>
+      <input type="file" id='uploadXMLFileId' name='importedFiles[]' accept='.xml' autocomplete='off' style='width: auto'>
+      <br>
+      <button id="startBTN">開始執行</button>
+    </td>
+  </tr>
+  <tr>
+    <td width="96%" align="center">
+      <br>
+      <textarea id="log" rows="35" cols="100">
+      </textarea>
+    </td>
+  </tr>
+</table>
+
+</body>
+<script>
+var docuSkyDbObj = null;
+var account = [];
+var tmp = {};
+$(window).ready(function() {
+   docuSkyDbObj = docuskyManageDbListSimpleUI;
+
+   $("#generateAccountBTN").click(function(e) {
+      generateAccount($("#frontInput").val()*1,$("#endInput").val()*1);
+   });
+
+   $("#uploadXMLFileId").change(function(e){
+     uploadXMLFile();
+   });
+
+   $("#startBTN").click(function(e) {
+     if(account.length==0){alert("請先產生帳號！"); return;}
+     var confirmed = confirm("確定開始執行？");
+     if (!confirmed) return;      // cancel
+     $("#startBTN").text("執行中，請稍候");
+     uploadDBToAllAccount();
+     $("#startBTN").text("開始執行");
+   });
+
+});
+
+var uploadXMLFile = function(){
+  let fileSizeLimit = "120" * 1024 * 1024;  // upload size limit -- ���滚�� uploadXmlFilesToBuildDbJson.php ��閮剖��
+
+  // Currently only support one file upload
+
+  var files = $("#uploadXMLFileId").get(0).files;
+  tmp.fileName = files[0].name;
+  tmp.fileSize = files[0].size;
+  if (tmp.fileSize > fileSizeLimit) {
+      alert("Error: \n" +
+          "The size of " + tmp.fileName + " (" + tmp.fileSize + ") exceeds upload limit\n" +
+          "Upload limit size: " + fileSizeLimit);
+      tmp.fileData = '';               // if upload empty string, DocuSky will return 'invalid XML' message
+      return;
+  }
+  readFile(files[0]).done(function(fileData){
+      tmp.fileData = fileData;
+  });
+
+}
+
+var readFile = function(file){
+    var loader = new FileReader();
+    var def = $.Deferred(), promise = def.promise();
+
+    //--- provide classic deferred interface
+    loader.onload = function (e) { def.resolve(e.target.result); };
+    loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
+    loader.onerror = loader.onabort = function (e) { def.reject(e); };
+    promise.abort = function () { return loader.abort.apply(loader, arguments); };
+
+    //loader.readAsBinaryString(file);
+    loader.readAsText(file,'UTF-8');
+    return promise;
+}
+
+var buildMultipart = function(data) {
+   var key, chunks = [], myBoundary;
+   myBoundary = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
+   myBoundary = '(-----------docusky:' + myBoundary + ')';
+
+   for (var key in data) {
+      if (key == "file") {
+         chunks.push("--" + myBoundary + "\r\n" +
+            "Content-Disposition: form-data; name=\"" + data[key].name + "\"; filename=\"" + data[key].filename + "\"\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            "Content-Transfer-Encoding: binary\r\n\r\n" +
+            data[key].value);
+      }
+      else {
+         chunks.push("--" + myBoundary + "\r\n" +
+            "Content-Disposition: form-data; name=\"" + data[key].name + "\"\r\n\r\n" +
+            data[key].value);
+      }
+   }
+
+   return {
+      myBoundary: myBoundary,
+      data: chunks.join("\r\n")+"\r\n--"+myBoundary+"--"
+   };
+}
+
+var generateAccount = function(front,end){
+  front = Math.min(Math.abs(front),Math.abs(end));
+  end = Math.max(Math.abs(front),Math.abs(end));
+  for(var i = front;i <= end; i++){
+    account[i] = {};
+    if(i<10){
+      account[i].username = "workshop0"+i;
+      account[i].password = "docusky0"+i;
+    }else{
+      account[i].username = "workshop"+i;
+      account[i].password = "docusky"+i;
+    }
+  }
+  alert("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了");
+  $("#log").append("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了\n");
+
+}
+
+var uploadDBToAllAccount = function(){
+  for(var i in account){
+      console.log("Prepare for: "+account[i].username);
+      $("#log").append("Prepare for: "+account[i].username+"\n");
+      login(account[i]);
+  }
+}
+
+var login = function(param){
+  if(!param || typeof(param)!='object'){
+    return;
+  }
+  var postdata = { dsUname: param.username, dsPword: param.password };
+  $.ajaxSetup({xhrFields: {withCredentials: true},async: false});
+  $.post('https://docusky.org.tw/DocuSky/webApi/userLoginJson.php', postdata, function(jsonObj) {
+     if (jsonObj.code == 0) {         // successfully login
+       console.log('Successfully Login '+param.username);
+       $("#log").append('Successfully Login '+param.username+"\n");
+       uploadDB(param);
+     }
+  }, 'json');
+
+
+}
+
+var uploadDB = function(param){
+  if(!$("#uploadDBName").val()){ alert("請輸入資料庫名稱"); return;}
+  event.preventDefault();
+  var uploadDBURL = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
+  formData = [];
+  formData[0] = {};
+  formData[0]["name"] = "dbTitleForImport";
+  formData[0]["value"] = $.trim($("#uploadDBName").val());
+  let nameVal = "importedFiles[]";
+  formData.file = {value: tmp.fileData, filename: tmp.fileName, name:nameVal};
+  var mul = buildMultipart(formData);
+  $.ajax({
+     url: uploadDBURL,
+     data: mul.data,
+     processData: false,
+     type: "post",
+     async: false,
+     xhrFields: {
+        withCredentials: true
+     },
+     crossDomain: true,
+     contentType: "multipart/form-data; boundary=" + mul.myBoundary,
+     success: function(data, status, xhr) {
+        if (data.code == 0) {
+          console.log("Successfully Upload DB: "+formData[0]["value"]+" to "+param.username);
+          $("#log").append("Successfully Upload DB: "+formData[0]["value"]+" to "+param.username+"\n");
+          logout(param);
+        }
+      },
+      error: function(xhr, status, error) {
+        alert(error);
+      }
+    });
+}
+
+
+var logout = function(param){
+  $.ajaxSetup({async: false});
+  $.get('https://docusky.org.tw/DocuSky/webApi/userLogoutJson.php', function(data) {
+    if(data.code == 0){
+      console.log("Successfully Logout: "+param.username);
+      $("#log").append("Successfully Logout: "+param.username+"\n");
+    }
+  });
+}
+
+</script>
+</html>

@@ -1,0 +1,182 @@
+
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+   <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <script src="https://docusky.org.tw/docusky/js.ui/docusky.ui.manageDataFileListSimpleUI.js"></script>
+   <style type="text/css">
+      body { margin: 0; line-height:150%; font-family: Microsoft JhengHei;}
+      div.headerBar { background-color:green; color:white; padding:8px; text-align: center; }
+      #content {
+        width: 90%;
+        margin: 10px auto;
+      }
+   </style>
+
+
+</head>
+<body>
+<div id="headerBar" class="headerBar">
+      Workshop 帳號 JSON 清除工具
+</div>
+<div id="content">
+     <div>
+         <table border="0" width="100%" cellpadding="0" cellspacing="0">
+         <tr><td><nobr>說明：</nobr></td>
+             <td width="96%" align="left">
+               這是一個可以批次刪除 workshop 帳號底下所有 JSON 的工具，請小心使用。<br>
+             </td>
+         </tr>
+         </table>
+     </div>
+</div>
+<table border="0" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="96%" align="center">
+      帳號： workshop <input type="text" id="frontInput"/> 到 workshop <input type="text" id="endInput"/> <button id="generateAccountBTN">產生帳號</button>
+      <button id="startBTN">開始執行</button><br>
+    </td>
+  </tr>
+  <tr>
+    <td width="96%" align="center">
+      <br>
+      <textarea id="log" rows="35" cols="100">
+      </textarea>
+    </td>
+  </tr>
+</table>
+
+</body>
+<script>
+var docuSkyObj= null;
+var account = [];
+$(window).ready(function() {
+   docuSkyObj = docuskyManageDataFileListSimpleUI;
+   $("#generateAccountBTN").click(function(e) {
+      generateAccount($("#frontInput").val()*1,$("#endInput").val()*1);
+   });
+
+   $("#startBTN").click(function(e) {
+     var confirmed = confirm("確定開始執行？");
+     if (!confirmed) return;      // cancel
+      deleteAllJSONFromAllAccount();
+   });
+
+});
+
+var generateAccount = function(front,end){
+  front = Math.min(Math.abs(front),Math.abs(end));
+  end = Math.max(Math.abs(front),Math.abs(end));
+  for(var i = front;i <= end; i++){
+    account[i] = {};
+    if(i<10){
+      account[i].username = "workshop0"+i;
+      account[i].password = "docusky0"+i;
+    }else{
+      account[i].username = "workshop"+i;
+      account[i].password = "docusky"+i;
+    }
+  }
+  alert("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了");
+  $("#log").append("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了\n");
+
+}
+
+var deleteAllJSONFromAllAccount = function(){
+  for(var i in account){
+      console.log("Prepare for: "+account[i].username);
+      $("#log").append("Prepare for: "+account[i].username+"\n");
+      login(account[i]);
+  }
+}
+
+var login = function(param){
+  if(!param || typeof(param)!='object'){
+    return;
+  }
+  var postdata = { dsUname: param.username, dsPword: param.password };
+  $.ajaxSetup({xhrFields: {withCredentials: true},async: false});
+  $.post('https://docusky.org.tw/DocuSky/webApi/userLoginJson.php', postdata, function(jsonObj) {
+     if (jsonObj.code == 0) {         // successfully login
+       console.log('Successfully Login '+param.username);
+       $("#log").append('Successfully Login '+param.username+"\n");
+       getAllJSON(param);
+     }
+  }, 'json');
+
+
+}
+
+var getAllJSON = function(param){
+  var AllCategoryDataFilenamesJson = null;
+  $.ajaxSetup({async: false});
+  $.get('http://docusky.org.tw/docusky/webApi/getAllCategoryDataFilenamesJson.php', function(data) {
+    if(data.code == 0){
+      AllCategoryDataFilenamesJson = data.message;
+      console.log(param.username+" :");
+      $("#log").append(param.username+" :\n");
+      console.log(AllCategoryDataFilenamesJson);
+      $("#log").append(JSON.stringify(AllCategoryDataFilenamesJson)+"\n");
+      $.each(AllCategoryDataFilenamesJson, function (index, value) {
+        if(value.length >1){
+          for(var item in value){
+            var itemsplit  = value[item].split("/");
+            let multipath = itemsplit[0];
+            itemsplit.forEach(function(it,index){
+               if(index!=(itemsplit.length-1)&& index!=0){
+                 multipath = multipath + "/" + it;
+               }
+             });
+            deleteJSON(param, index, multipath, itemsplit[itemsplit.length-1]);
+            //var df = value[item].split("/");
+            //deleteJSON(param, index, df[0], df[1]);
+          }
+        }else{
+          var item  = value[0].split("/");
+          let multipath = item[0];
+          item.forEach(function(it,index){
+             if(index!=(item.length-1)&& index!=0){
+               multipath = multipath + "/" + it;
+             }
+           });
+          deleteJSON(param, index, multipath, item[item.length-1]);
+       }
+
+      });
+
+      logout(param);
+    }
+  });
+}
+
+var deleteJSON = function(param, category, datapath, filename){
+  var url = 'https://docusky.org.tw/DocuSky/webApi/deleteDataFileJson.php';
+  var parameters = "category=" + encodeURIComponent(category)
+                 + "&pathfile=" + encodeURIComponent(datapath + "/" + filename);
+  url += "?" + parameters;
+  $.ajaxSetup({async: false});
+  $.get(url, function(data) {
+    if(data.code == 0){
+      console.log("Successfully Remove JSON: "+category+" "+datapath+" "+filename+" from "+param.username);
+      $("#log").append("Successfully Remove JSON: "+category+" "+datapath+" "+filename+" from "+param.username+"\n");
+    }
+  });
+
+}
+
+var logout = function(param){
+  $.ajaxSetup({async: false});
+  $.get('https://docusky.org.tw/DocuSky/webApi/userLogoutJson.php', function(data) {
+    if(data.code == 0){
+      console.log("Successfully Logout: "+param.username);
+      $("#log").append("Successfully Logout: "+param.username+"\n");
+    }
+  });
+}
+
+</script>
+</html>

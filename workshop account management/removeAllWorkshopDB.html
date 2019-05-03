@@ -1,0 +1,157 @@
+
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+   <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+   <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <script src="https://docusky.org.tw/docusky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
+   <style type="text/css">
+      body { margin: 0; line-height:150%; font-family: Microsoft JhengHei;}
+      div.headerBar { background-color:brown; color:white; padding:8px; text-align: center; }
+      #content {
+        width: 90%;
+        margin: 10px auto;
+      }
+   </style>
+
+
+</head>
+<body>
+<div id="headerBar" class="headerBar">
+      Workshop 帳號文獻集清除工具
+</div>
+<div id="content">
+     <div>
+         <table border="0" width="100%" cellpadding="0" cellspacing="0">
+         <tr><td><nobr>說明：</nobr></td>
+             <td width="96%" align="left">
+               這是一個可以批次刪除 workshop 帳號底下所有文獻集的工具，請小心使用。<br>
+             </td>
+         </tr>
+         </table>
+     </div>
+</div>
+<table border="0" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="96%" align="center">
+      帳號： workshop <input type="text" id="frontInput"/> 到 workshop <input type="text" id="endInput"/> <button id="generateAccountBTN">產生帳號</button>
+      <button id="startBTN">開始執行</button><br>
+    </td>
+  </tr>
+  <tr>
+    <td width="96%" align="center">
+      <br>
+      <textarea id="log" rows="35" cols="100">
+      </textarea>
+    </td>
+  </tr>
+</table>
+
+</body>
+<script>
+var docuSkyDbObj = null;
+var account = [];
+$(window).ready(function() {
+   docuSkyDbObj = docuskyManageDbListSimpleUI;
+
+   $("#generateAccountBTN").click(function(e) {
+      generateAccount($("#frontInput").val()*1,$("#endInput").val()*1);
+   });
+
+   $("#startBTN").click(function(e) {
+     var confirmed = confirm("確定開始執行？");
+     if (!confirmed) return;      // cancel
+      deleteAllDBFromAllAccount();
+   });
+
+});
+
+var generateAccount = function(front,end){
+  front = Math.min(Math.abs(front),Math.abs(end));
+  end = Math.max(Math.abs(front),Math.abs(end));
+  for(var i = front;i <= end; i++){
+    account[i] = {};
+    if(i<10){
+      account[i].username = "workshop0"+i;
+      account[i].password = "docusky0"+i;
+    }else{
+      account[i].username = "workshop"+i;
+      account[i].password = "docusky"+i;
+    }
+  }
+  alert("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了");
+  $("#log").append("已經產生從: workshop"+front+" 到 workshop"+end+" 的帳號了\n");
+
+}
+
+var deleteAllDBFromAllAccount = function(){
+  for(var i in account){
+      console.log("Prepare for: "+account[i].username);
+      $("#log").append("Prepare for: "+account[i].username+"\n");
+      login(account[i]);
+  }
+}
+
+var login = function(param){
+  if(!param || typeof(param)!='object'){
+    return;
+  }
+  var postdata = { dsUname: param.username, dsPword: param.password };
+  $.ajaxSetup({xhrFields: {withCredentials: true},async: false});
+  $.post('https://docusky.org.tw/DocuSky/webApi/userLoginJson.php', postdata, function(jsonObj) {
+     if (jsonObj.code == 0) {         // successfully login
+       console.log('Successfully Login '+param.username);
+       $("#log").append('Successfully Login '+param.username+"\n");
+       getAllDB(param);
+     }
+  }, 'json');
+
+
+}
+
+var getAllDB = function(param){
+  var db = [];
+  $.ajaxSetup({async: false});
+  $.get('https://docusky.org.tw/DocuSky/webApi/getDbListJson.php', function(data) {
+    if(data.code == 0){
+      db = data.message;
+      console.log(param.username+" :");
+      $("#log").append(param.username+" :\n");
+      console.log(db);
+      $("#log").append(JSON.stringify(db)+"\n");
+      for(var i = 0;i < db.length;i++ ){
+        deleteDB(param,db[i]['db']);
+      }
+      logout(param);
+    }
+  });
+}
+
+var deleteDB = function(param,dbname){
+  var url = 'https://docusky.org.tw/DocuSky/webApi/deleteDbJson.php' + '?db=' + dbname;
+  $.ajaxSetup({async: false});
+  $.get(url, function(data) {
+    if(data.code == 0){
+      console.log("Successfully Remove DB: "+dbname+" from "+param.username);
+      $("#log").append("Successfully Remove DB: "+dbname+" from "+param.username+"\n");
+    }
+
+  });
+
+}
+
+var logout = function(param){
+  $.ajaxSetup({async: false});
+  $.get('https://docusky.org.tw/DocuSky/webApi/userLogoutJson.php', function(data) {
+    if(data.code == 0){
+      console.log("Successfully Logout: "+param.username);
+      $("#log").append("Successfully Logout: "+param.username+"\n");
+    }
+  });
+}
+
+</script>
+</html>
