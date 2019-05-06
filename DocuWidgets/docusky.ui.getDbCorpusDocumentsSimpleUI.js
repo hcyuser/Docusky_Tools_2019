@@ -27,6 +27,7 @@
  * 0.15 (April 16 2019) add with mechanism on maxResponseTimeout and maxRetryCount
  * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
  * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon and modify UI display position
+ * 0.18 (May 4 2019) fix retry problem when server improperly return a non-JSON
  *
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
@@ -43,7 +44,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    var me = this;
 
    this.package = 'docusky.ui.getDbCorpusDocumentsSimpleUI.js';    // 主要目的：取得給定 db, corpus 的文件
-   this.version = 0.16;                             // 2019-04-23
+   this.version = 0.18;                             // 2019-05-04
    this.idPrefix = 'CorpusDoc_';                    // 2016-08-13
 
    this.showPublicDbLink = true;                    // 2018-09-30, 2018-10-15
@@ -67,7 +68,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    //this.callerCallbackParameters = null;          // 儲存回呼函式的傳入參數
    this.initialized = false;
    this.target = 'USER';                            // 'target', 'db', 'corpus' are input parameters of urlGetQueryResultDocumentsJson
-   this.includeFriendDb = true;                     // 2019-03-23: default false for backward-compatibility
+   this.includeFriendDb = false;                    // 2019-03-23: default false for backward-compatibility
    this.ownerUsername = null;                       // 2019-04-21: 目前似乎只需 ownerUsername 而不需要 username...
    this.db = '';
    this.corpus = '';
@@ -258,8 +259,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       			$("#" + dbCorpusListContainerId).fadeOut();
          }, 'json')
          .fail(function (jqXHR, textStatus, errorThrown){
-                console.error("Connection Error");
-                alert("Connection Error");
+            console.error("Connection Error");
+            alert("Connection Error");
           });
 		   // Clear out obtained document list
 		   me.docList = [];
@@ -413,6 +414,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
@@ -639,12 +644,16 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-        if(jqXHR.status=="404" || jqXHR.status=="403"){
-          console.error("Server Error");
-        }
-        else{
-          console.error("Connection Error");
-        }
+         if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+            alert("Server response seems not a valid JSON");
+            return;
+         }
+         if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+         }
+         else{
+            console.error("Connection Error");
+         }
          if(typeof me.Error === "function"){
            if(jqXHR.status=="404" || jqXHR.status=="403"){
              me.Error("Server Error");
@@ -959,6 +968,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
 
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
@@ -1097,53 +1110,55 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-        if(jqXHR.status=="404" || jqXHR.status=="403"){
-          console.error("Server Error");
-        }
-        else{
-          console.error("Connection Error");
-        }
-        if(evt || me.displayLoadingIcon){
-          if(jqXHR.status=="404" || jqXHR.status=="403"){
-            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-            $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
-            $("#"+loadingContainerId).show();
-          }else{
-            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-            $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
-            $("#"+loadingContainerId).show();
-          }
-        }
+         if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+            alert("Server response seems not a valid JSON");
+            return;
+         }
+         if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+         }
+         else{
+            console.error("Connection Error");
+         }
+         if(evt || me.displayLoadingIcon){
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+               $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+               $("#"+loadingContainerId).show();
+            }else{
+               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+               $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+               $("#"+loadingContainerId).show();
+            }
+         }
          if (typeof failFunc === "function") {
             failFunc();
          }
          else if(typeof me.Error === "function"){
-           if(jqXHR.status=="404" || jqXHR.status=="403"){
-             me.Error("Server Error");
-           }
-           else{
-             me.Error("Connection Error");
-           }
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+               me.Error("Server Error");
+            }
+            else{
+               me.Error("Connection Error");
+            }
          }
          else{
-           if(jqXHR.status=="404" || jqXHR.status=="403"){
-             alert("Server Error");
-           }
-           else{
-             if(me.presentRetryCount < me.maxRetryCount){
-               me.presentRetryCount++;
-               alert("Connection Error");
-               let retry = function(){
-                 me.getQueryPostClassification(param, evt, succFunc, failFunc);
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+               alert("Server Error");
+            }
+            else{
+               if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                  let retry = function(){
+                     me.getQueryPostClassification(param, evt, succFunc, failFunc);
+                  }
+                  setTimeout(retry,3000);
                }
-               setTimeout(retry,3000);
-
-             }
-             else{
-               alert("Please check your Internet connection and refresh this page.");
-             }
-
-           }
+               else{
+                  alert("Please check your Internet connection and refresh this page.");
+               }
+            }
          }
 
       });
@@ -1240,24 +1255,28 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-        if(jqXHR.status=="404" || jqXHR.status=="403"){
-          console.error("Server Error");
-        }
-        else{
-          console.error("Connection Error");
-        }
+         if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+            alert("Server response seems not a valid JSON");
+            return;
+         }
+         if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+         }
+         else{
+            console.error("Connection Error");
+         }
 
-        if(evt || me.displayLoadingIcon){
-          if(jqXHR.status=="404" || jqXHR.status=="403"){
-            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-            $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
-            $("#"+loadingContainerId).show();
-          }else{
-            $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-            $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
-            $("#"+loadingContainerId).show();
-          }
-        }
+         if(evt || me.displayLoadingIcon){
+            if(jqXHR.status=="404" || jqXHR.status=="403"){
+               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+               $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+               $("#"+loadingContainerId).show();
+            }else{
+               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+               $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+               $("#"+loadingContainerId).show();
+            }
+         }
 
          if (typeof failFunc === "function") {
             failFunc();
@@ -1295,10 +1314,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    };
 
    me.updateDocument = function(ownerUsername, db, corpus, docInfo, succFunc, failFunc) {       // 2019-04-21: add ownerUsername
+      if (typeof corpus === 'object') {      // 2019-05-03: the 3rd is JSON object (old arguments does not contain ownerUsername)
+         // destructuring assignments
+         [ownerUsername, db, corpus, docsInfo, succFunc, failFunc] = [null, ownerUsername, db, corpus, docsInfo, succFunc];
+      }
       updateOrReplaceDoc(me.urlUpdateCorpusDocumentJson, ownerUsername, db, corpus, docInfo, succFunc, failFunc);
    };
 
    me.replaceDocument = function(ownerUsername, db, corpus, docInfo, succFunc, failFunc) {      // 2018-10-15
+      if (typeof corpus === 'object') {      // the 3rd is JSON object (old arguments does not contain ownerUsername)
+         // destructuring assignments
+         [ownerUsername, db, corpus, docsInfo, succFunc, failFunc] = [null, ownerUsername, db, corpus, docsInfo, succFunc];
+      }
       updateOrReplaceDoc(me.urlReplaceSingleCorpusDocJson, ownerUsername, db, corpus, docInfo, succFunc, failFunc);
    };
 

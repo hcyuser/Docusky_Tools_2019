@@ -25,7 +25,7 @@
  * 0.13 (April 04 2019) add functions for user friendship and accessible dbs
  * 0.14 (April 23 2019) add with mechanism on maxResponseTimeout, maxRetryCount, uploadProgressFunc, utility.setStyle, setLoadingIcon
  *                      fix the display of uploadprogressbar
- *
+ * 0.15 (May 04 2019) fix hideWidget(), add ownerUsername, and fix server improperly return a non-JSON (should not retry in this case)
  *
  *
  *
@@ -44,7 +44,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    var me = this;                           // stores object reference
 
    me.package = 'docusky.ui.manageDbListSimpleUI.js';      // 主要目的：取得給定 db, corpus 的文件
-   me.version = 0.13;
+   me.version = 0.15;
    me.idPrefix = 'DbList_';                 // 2016-08-13
 
    me.utility = null;
@@ -61,6 +61,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.callerEvent = null;
    me.callerCallback = null;              // 儲存成功執行後所需呼叫的函式
    me.initialized = false;
+   me.includeFriendDb = false;            // 2019-05-04: default false for backward-compatibility
+   me.ownerUsername = null;               // 2019-05-04
    me.dbList = [];                        // 儲存 DocuSky 的 user databasees 列表
    me.fileName = '';                      // 欲上傳檔案（在本地）的名稱
    me.fileData = '';                      // 欲上傳檔案的內容
@@ -74,9 +76,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    me.displayWidget = true;               // 2017-07-24
    me.widgetEvents = { dbClick: null,     // null: disable clicking db -- can be set from invoker as obj.widgetEvents.dbClick=function(s){...}, where s will be the db title
                        corpusAttCntClick: null,                // 2018-01-08: 若 enable 此項，則 corpusClick/attCntClick 將失效
-                       corpusClick:
-                          function(evt, obj, db, corpus) {     // 2018-05-13: default function ==> open a new window to display db+corpus content
-                             var url = me.urlWebApiPath + "/webpage-search-3in1.php?db=" + db + "&corpus=" + corpus;
+                       corpusClick:                            // 2018-05-13: default function ==> open a new window to display db+corpus content
+                          function(evt, ownerUsername, db, corpus) {     // 2019-05-04: add ownerUsername
+                             var url = me.urlWebApiPath + "/webpage-search-3in1.php?ownerUsername=" + ownerUsername + "&db=" + db + "&corpus=" + corpus;
                              window.open(url, "_blank");
                           },
                        attCntClick: null
@@ -279,6 +281,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-04: server return is not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
@@ -325,9 +331,9 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
    };
 
    me.hideWidget = function(bool) {
-      me.displayWidget = (bool === false);      // only hide when parameter equals false
-      //alert(me.displayWidget);
-      if (!me.displayWidget) {
+      if (bool === false) me.displayWidget = true;           // 2019-05-03
+      //alert(bool + ':' + me.displayWidget);
+      if (bool === undefined || !me.displayWidget) {         // 2019-05-03: if bool undefined ==> close (i.e., not always hide but just not hide now) the widget
          var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
          $("#" + dbListContainerId).hide();
          var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
@@ -372,6 +378,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
       var s = "<table id='" + contentTableId + "' class='dsw-tableDbCorpuslist'>";
       for (var i=0; i<dbList.length; i++) {
+         var username = dbList[i]['username'] || me.username;                // 2019-05-04
+         var ownerUsername = dbList[i]['ownerUsername'] || me.username;      // 2019-05-04
          var db = dbList[i]['db'];
          var dbStatus = dbList[i]['dbStatus'];
          if (dbStatus != 0 && dbStatus != 9) refreshDbList = true;           // 只要有一份資料庫尚未完成工作，就啟動 refresh
@@ -385,16 +393,17 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             var corpus = myList[j];
             var attCnt = attCntList[j];
             var t2 = "";
+            let attrStr = `x-db='${db}' x-corpus='${corpus}' x-ownerUsername='${ownerUsername}'`;      // 2019-05-04
             if (me.widgetEvents.corpusAttCntClick) {
-               var t1 = "<span class='dsw-corpusAttCntClick' x-db='" + db + "' x-corpus='" + corpus + "'>"
+               var t1 = "<span class='dsw-corpusAttCntClick' " + attrStr + ">"
                       + corpus
                       + (attCnt > 0 ? " [" + attCnt + "]" : "")
                       + "</span>";
             }
             else {
-               var t1 = (me.widgetEvents.corpusClick) ? "<span class='dsw-corpusClick' x-db='" + db + "' x-corpus='" + corpus + "'>" + corpus + "</span>" : corpus;
+               var t1 = (me.widgetEvents.corpusClick) ? "<span class='dsw-corpusClick' " + attrStr + ">" + corpus + "</span>" : corpus;
                if (attCnt > 0) {
-                  t2 = (me.widgetEvents.attCntClick) ? "<span class='dsw-attCntClick' x-db='" + db + "' x-corpus='" + corpus + "'> [" + attCnt + "]</span>" : "[" + attCnt + "]";
+                  t2 = (me.widgetEvents.attCntClick) ? "<span class='dsw-attCntClick' " + attrStr + ">" + corpus + "'> [" + attCnt + "]</span>" : "[" + attCnt + "]";
                }
             }
             corpusListStr += "<span class='dsw-dbList-corpusnames-corpusname'>"
@@ -404,10 +413,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          corpusListStr += "</div>";
 
          var t = (me.widgetEvents.dbClick) ? "<span class='dsw-dbClick' x-db='" + db + "'>" + db + "</span>" : db;
+         var deleteMsg = (username == ownerUsername) 
+                       ? "<a class='deleteDb' href='" + me.urlDeleteDbJson + "?db=" + db + "'>刪除</a>"
+                       : "<span style='background-color:darkred;color:white;'>" + ownerUsername + "</span>";
          s += "<tr class='dsw-tr-dbcorpuslist'>"
            +  "<td class='dsw-td-dbList dsw-td-dbList-dbname'>" + t + "</td>"
            +  "<td class='dsw-td-dbList dsw-td-dbList-corpusnames'>" + corpusListStr + "</td>"
-           +  "<td class='dsw-td-dbList dsw-td-dbList-delete'><a class='deleteDb' href='" + me.urlDeleteDbJson + "?db=" + db + "'>刪除</a></td>";
+           +  "<td class='dsw-td-dbList dsw-td-dbList-delete'>" + deleteMsg + "</td>";
            +  "</tr>";
       }
 
@@ -419,19 +431,27 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
       $("span.dsw-dbClick").on("click", function(evt) {
          me.hideWidget();
-         if (typeof me.widgetEvents.dbClick === 'function') me.widgetEvents.dbClick(evt,this,$(this).attr("x-db"));
+         if (typeof me.widgetEvents.dbClick === 'function') {
+            me.widgetEvents.dbClick(evt,$(this).attr("x-ownerUsername"),$(this).attr("x-db"));
+         }
       });
       $("span.dsw-corpusAttCntClick").on("click", function(evt) {
          me.hideWidget();
-         if (typeof me.widgetEvents.corpusAttCntClick === 'function') me.widgetEvents.corpusAttCntClick(evt,this,$(this).attr("x-db"), $(this).attr("x-corpus"));
+         if (typeof me.widgetEvents.corpusAttCntClick === 'function') {
+            me.widgetEvents.corpusAttCntClick(evt,$(this).attr("x-ownerUsername"),$(this).attr("x-db"), $(this).attr("x-corpus"));
+         }
       });
       $("span.dsw-corpusClick").on("click", function(evt) {
          me.hideWidget();
-         if (typeof me.widgetEvents.corpusClick === 'function') me.widgetEvents.corpusClick(evt,this,$(this).attr("x-db"), $(this).attr("x-corpus"));
+         if (typeof me.widgetEvents.corpusClick === 'function') {
+            me.widgetEvents.corpusClick(evt,$(this).attr("x-ownerUsername"),$(this).attr("x-db"), $(this).attr("x-corpus"));
+         }
       });
       $("span.dsw-attCntClick").on("click", function(evt) {
          me.hideWidget();
-         if (typeof me.widgetEvents.attCntClick === 'function') me.widgetEvents.attCntClick(evt,this,$(this).attr("x-db"), $(this).attr("x-corpus"));
+         if (typeof me.widgetEvents.attCntClick === 'function') {
+            me.widgetEvents.attCntClick(evt,$(this).attr("x-ownerUsername"),$(this).attr("x-db"), $(this).attr("x-corpus"));
+         }
       });
 
       // test...
@@ -526,6 +546,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
         }
      }, 'json')
      .fail(function (jqXHR, textStatus, errorThrown){
+       if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+          alert("Server response seems not a valid JSON");
+          return;
+       }
        if(jqXHR.status=="404" || jqXHR.status=="403"){
          console.error("Server Error");
        }
@@ -598,12 +622,16 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
-        if(jqXHR.status=="404" || jqXHR.status=="403"){
-          console.error("Server Error");
-        }
-        else{
-          console.error("Connection Error");
-        }
+         if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+            alert("Server response seems not a valid JSON");
+            return;
+         }
+         if(jqXHR.status=="404" || jqXHR.status=="403"){
+            console.error("Server Error");
+         }
+         else{
+            console.error("Connection Error");
+         }
          if (typeof failFunc === "function") {
             failFunc();
          }
@@ -679,6 +707,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
@@ -751,9 +783,13 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       var loginContainerOverlayId = me.idPrefix + "loginContainerOverlay" + me.uniqueId;
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
 
+      let friendDb = (me.includeFriendDb) ? '&includeFriendDb=1' : '';      // 2019-05-04
+      let displayTarget = 'USER';                                           // can only "manage" user databases (cannot manage open databases)
+      let url = me.urlGetDbListJson + '?' + 'target=' + displayTarget + friendDb;
+
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
-      $.get( me.urlGetDbListJson, function(data) {
+      $.get( url, function(data) {
          if(evt){
            let loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
            $("#"+loadingContainerId).hide();
@@ -786,15 +822,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
               $("#"+spanDisplaynameId).html(me.displayname);
             });
 
-
-            // 2017-07-22
-            if (typeof me.callerCallback === "function") {
-               me.hideWidget(me.displayWidget);
-               me.callerCallback();
-            }
-            else{
-              displayDbList(evt);
-            }
+            // 2017-07-22, 2019-05-03
+            displayDbList(evt);
+            me.hideWidget(!me.displayWidget);  // 2019-05-03: only hide widget when setting displayWidget to be false
+            if (typeof me.callerCallback === "function") me.callerCallback();
          }
          else if (data.code == 101) {             // requires login
 
@@ -830,11 +861,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          else {
              console.error("Server Error");
              if (typeof failFunc === "function") {
-                me.hideWidget(me.displayWidget);
+                me.hideWidget(!me.displayWidget);
                 failFunc();
              }
              else if(typeof me.Error === "function"){
-                me.hideWidget(me.displayWidget);
+                me.hideWidget(!me.displayWidget);
                 me.Error("Server Error");
              }
              else{
@@ -843,6 +874,10 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-04: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
@@ -870,11 +905,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
          }
          if (typeof failFunc === "function") {
-            me.hideWidget(me.displayWidget);
+            me.hideWidget(!me.displayWidget);
             failFunc();
          }
          else if(typeof me.Error === "function"){
-            me.hideWidget(me.displayWidget);
+            me.hideWidget(!me.displayWidget);
             if(jqXHR.status=="404" || jqXHR.status=="403"){
               me.Error("Server Error");
             }
@@ -910,7 +945,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
 
 
    // -------------------------------------------------
-   // 2019-04-04
+   // 2019-05-04
    //me.manageUserFriendAccessibleDb = function(evt, successFunc, failFunc) {
    //   // 將 user friendship and user friend accessible db 功能合在一起並提供簡單介面
    //   // TODO
