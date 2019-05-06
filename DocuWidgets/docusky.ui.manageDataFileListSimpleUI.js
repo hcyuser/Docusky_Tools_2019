@@ -17,7 +17,8 @@
  * 0.07 (July 31 2017) modify the arguments of jsonTransporter.storeJson(), add hideWidget()
  * 0.08 (Nov 27 2017) add renameDataFile()
  * 0.09 (January 30 2018) expose login(), add withCredentials
- *
+ * 0.10 (May 07 2019)  add error handling, me.Error, me.maxResponseTimeout, me.maxRetryCount, me.uploadProgressFunc and utility.setStyle
+ *                     modify UI display and position
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
@@ -60,6 +61,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    me.maxResponseTimeout = 300000;
    me.maxRetryCount = 10;
    me.presentRetryCount = 0;
+   me.uploadProgressFunc = null; //callback function for the percentage of upload progress
    me.jsonTransporter = {                 // 利用此物件的 jsonObj 在 client-server 之間傳遞 json 物件
       category: 'unknown',
       datapath: 'unknown',
@@ -845,6 +847,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
                   var r = (percentComplete_i == 100) ? ' ... waiting for server response' : '';
                   $("#" + uploadProgressId + " .dsw-uploadprogressbar-progress").text(percentComplete_i + '%' + r).css("width", percentComplete_f + "%");	// 20170302
                }
+               if(typeof me.uploadProgressFunc === 'function') me.uploadProgressFunc(percentComplete_i);
             }, false);     // true: event captured in capturing phase, false: bubbling phase
             // xhr.addEventListener("progress", function(evt){           // download progress
             //    if (evt.lengthComputable) {
