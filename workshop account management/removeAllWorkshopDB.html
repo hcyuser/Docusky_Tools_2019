@@ -4,6 +4,8 @@
 <head>
    <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <title>Workshop 帳號文獻集清除工具</title>
+   <link rel="Shortcut Icon" type="image/x-icon" href="https://docusky.org.tw/DocuSky/images/icons/DocuSkyIcon.png" />
    <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
    <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
    <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
@@ -50,6 +52,11 @@
   </tr>
 </table>
 
+<div id="loadingDialog" title="Loading" align="center" style="display:none">
+  <img src="https://docusky.org.tw/DocuSky/webApi/images/loading-circle.gif">
+  <p>處理中，請稍候</p>
+</div>
+
 </body>
 <script>
 var docuSkyDbObj = null;
@@ -62,9 +69,7 @@ $(window).ready(function() {
    });
 
    $("#startBTN").click(function(e) {
-     var confirmed = confirm("確定開始執行？");
-     if (!confirmed) return;      // cancel
-      deleteAllDBFromAllAccount();
+      beforeDeleteAllDBFromAllAccount().then(inDeleteAllDBFromAllAccount).then(afterDeleteAllDBFromAllAccount);
    });
 
 });
@@ -151,6 +156,40 @@ var logout = function(param){
       $("#log").append("Successfully Logout: "+param.username+"\n");
     }
   });
+}
+
+
+var beforeDeleteAllDBFromAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      if(account.length==0){alert("請先產生帳號！"); return;}
+      var confirmed = confirm("確定開始執行？");
+      if (!confirmed) return;      // cancel
+      $("#loadingDialog").dialog({
+      	draggable: false,
+      	height: 200,
+      	width: 400,
+      	closeText: "" ,
+      	open: function(event, ui) {
+              $(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+          }
+      }).prev(".ui-dialog-titlebar").css("background","brown");
+      resolve()
+    },0)
+  })
+}
+
+var inDeleteAllDBFromAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      deleteAllDBFromAllAccount();
+      resolve()
+    },0)
+  })
+}
+
+var afterDeleteAllDBFromAllAccount = function(){
+  $("#loadingDialog").dialog('close');
 }
 
 </script>

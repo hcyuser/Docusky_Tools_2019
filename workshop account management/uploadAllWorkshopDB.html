@@ -4,6 +4,8 @@
 <head>
    <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <title>Workshop 帳號文獻集上傳工具</title>
+   <link rel="Shortcut Icon" type="image/x-icon" href="https://docusky.org.tw/DocuSky/images/icons/DocuSkyIcon.png" />
    <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
    <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
    <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
@@ -59,6 +61,11 @@
   </tr>
 </table>
 
+<div id="loadingDialog" title="Loading" align="center" style="display:none">
+  <img src="https://docusky.org.tw/DocuSky/webApi/images/loading-circle.gif">
+  <p>處理中，請稍候</p>
+</div>
+
 </body>
 <script>
 var docuSkyDbObj = null;
@@ -76,12 +83,7 @@ $(window).ready(function() {
    });
 
    $("#startBTN").click(function(e) {
-     if(account.length==0){alert("請先產生帳號！"); return;}
-     var confirmed = confirm("確定開始執行？");
-     if (!confirmed) return;      // cancel
-     $("#startBTN").text("執行中，請稍候");
-     uploadDBToAllAccount();
-     $("#startBTN").text("開始執行");
+     beforeUploadDBToAllAccount().then(inUploadDBToAllAccount).then(afterUploadDBToAllAccount);
    });
 
 });
@@ -192,7 +194,6 @@ var login = function(param){
 }
 
 var uploadDB = function(param){
-  if(!$("#uploadDBName").val()){ alert("請輸入資料庫名稱"); return;}
   event.preventDefault();
   var uploadDBURL = 'https://docusky.org.tw/DocuSky/webApi/uploadXmlFilesToBuildDbJson.php';
   formData = [];
@@ -235,6 +236,41 @@ var logout = function(param){
       $("#log").append("Successfully Logout: "+param.username+"\n");
     }
   });
+}
+
+var beforeUploadDBToAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      if(account.length==0){alert("請先產生帳號！"); return;}
+      if(!$("#uploadDBName").val()){ alert("請輸入資料庫名稱"); return;}
+      var confirmed = confirm("確定開始執行？");
+      if (!confirmed) return;      // cancel
+      $("#loadingDialog").dialog({
+      	draggable: false,
+      	height: 200,
+      	width: 400,
+      	closeText: "" ,
+      	open: function(event, ui) {
+              $(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+          }
+      }).prev(".ui-dialog-titlebar").css("background","brown");
+      resolve()
+    },0)
+  })
+}
+
+var inUploadDBToAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      uploadDBToAllAccount();
+      resolve()
+    },0)
+  })
+}
+
+
+var afterUploadDBToAllAccount = function(){
+  $("#loadingDialog").dialog('close');
 }
 
 </script>

@@ -4,6 +4,8 @@
 <head>
    <!-- CORS: http://www.html5rocks.com/en/tutorials/cors/ -->
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <title>Workshop 帳號 JSON 上傳工具</title>
+   <link rel="Shortcut Icon" type="image/x-icon" href="https://docusky.org.tw/DocuSky/images/icons/DocuSkyIcon.png" />
    <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
    <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
    <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
@@ -57,6 +59,11 @@
   </tr>
 </table>
 
+<div id="loadingDialog" title="Loading" align="center" style="display:none">
+  <img src="https://docusky.org.tw/DocuSky/webApi/images/loading-circle.gif">
+  <p>處理中，請稍候</p>
+</div>
+
 </body>
 <script>
 var docuSkyObj= null;
@@ -70,10 +77,8 @@ $(window).ready(function() {
    });
 
    $("#startBTN").click(function(e) {
-     if(account.length==0){alert("請先產生帳號!"); return;}
-     var confirmed = confirm("確定開始執行？");
-     if (!confirmed) return;      // cancel
-      uploadJSONToAllAccount();
+
+    beforeUploadJSONToAllAccount().then(inUploadJSONToAllAccount).then(afterUploadJSONToAllAccount);
    });
 
    $("#uploadJsonFileId").change(function(e){
@@ -160,7 +165,7 @@ var uploadJSON = function(param){
 
   $.ajaxSetup({xhrFields: {withCredentials: true}});
   $.ajax({
-     url: 'https://docusky.org.tw/DocuSky/webApi/saveDataFileByHttpPostJson.php', 
+     url: 'https://docusky.org.tw/DocuSky/webApi/saveDataFileByHttpPostJson.php',
      data: fd,
      processData: false,
      type: "post",
@@ -188,6 +193,41 @@ var logout = function(param){
       $("#log").append("Successfully Logout: "+param.username+"\n");
     }
   });
+}
+
+var beforeUploadJSONToAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      if(account.length==0){alert("請先產生帳號!"); return;}
+      if($("#category").val()=="" || $("#datapath").val()==""){ alert("類別 路徑 不可以為空!"); return;}
+      var confirmed = confirm("確定開始執行？");
+      if (!confirmed) return;      // cancel
+      $("#loadingDialog").dialog({
+      	draggable: false,
+      	height: 200,
+      	width: 400,
+      	closeText: "" ,
+      	open: function(event, ui) {
+              $(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+          }
+      }).prev(".ui-dialog-titlebar").css("background","green");
+      resolve()
+    },0)
+  })
+}
+
+var inUploadJSONToAllAccount = function(){
+  return new Promise((resolve,reject)=>{
+    setTimeout(function(){
+      uploadJSONToAllAccount();
+      resolve()
+    },0)
+  })
+}
+
+
+var afterUploadJSONToAllAccount = function(){
+  $("#loadingDialog").dialog('close');
 }
 
 </script>
