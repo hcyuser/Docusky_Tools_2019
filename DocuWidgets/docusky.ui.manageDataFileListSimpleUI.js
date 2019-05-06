@@ -1024,6 +1024,21 @@ var docuskyWidgetUtilityFunctions = {
       alert(jsonPretty);
    },
 
+   //2019-05-06
+   setStyle: function(param){
+     if (typeof(param) !== 'object') param = {};
+     if('frameBackgroundColor' in param){
+       $("div.dsw-container").css('border', param.frameBackgroundColor+' solid 3px');
+       $("div.dsw-titleBar").css('background-color', param.frameBackgroundColor);
+     }
+     if('frameColor' in param){
+       $("div.dsw-titleBar").css('color', param.frameColor);
+     }
+     if('contentBackgroundColor' in param){
+       $("div.dsw-container").css('background-color', param.contentBackgroundColor);
+     }
+   },
+
    // 2017-01-01
    includeJs: function(url) {
       var script  = document.createElement('script');
