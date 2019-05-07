@@ -18,7 +18,8 @@
  * 0.08 (Nov 27 2017) add renameDataFile()
  * 0.09 (January 30 2018) expose login(), add withCredentials
  * 0.10 (May 07 2019)  add error handling, me.Error, me.maxResponseTimeout, me.maxRetryCount, me.uploadProgressFunc and utility.setStyle
- *                     modify UI display and position
+ *                     fix server improperly return a non-JSON (should not retry in this case)
+ *                     modify UI display and position 
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
@@ -172,6 +173,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
          })
          .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
            if(jqXHR.status=="404" || jqXHR.status=="403"){
              console.error("Server Error");
            }
@@ -240,6 +249,10 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
            }
          })
          .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
            if(jqXHR.status=="404" || jqXHR.status=="403"){
              console.error("Server Error");
            }
@@ -309,6 +322,10 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             }
          })
          .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
            if(jqXHR.status=="404" || jqXHR.status=="403"){
              console.error("Server Error");
            }
@@ -522,6 +539,10 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
@@ -747,6 +768,10 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
          }
       }, 'json')
       .fail(function (jqXHR, textStatus, errorThrown){
+          if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+             alert("Server response seems not a valid JSON");
+             return;
+          }
           if(jqXHR.status=="404" || jqXHR.status=="403"){
             console.error("Server Error");
           }
