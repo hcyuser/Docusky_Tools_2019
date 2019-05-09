@@ -19,7 +19,7 @@
  * 0.09 (January 30 2018) expose login(), add withCredentials
  * 0.10 (May 07 2019)  add error handling, me.Error, me.maxResponseTimeout, me.maxRetryCount, me.uploadProgressFunc and utility.setStyle
  *                     fix server improperly return a non-JSON (should not retry in this case)
- *                     modify UI display and position 
+ *                     modify UI display and position
  * @copyright
  * Copyright (C) 2016 Hsieh-Chang Tu
  *
@@ -35,7 +35,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    var me = this;                                               // store object reference
 
    me.package = 'docusky.ui.manageDataFileListSimpleUI.js';   // 主要目的：取得 data file list，並讓使用者可上載或刪除 data files
-   me.version = 0.09;
+   me.version = 0.10;
    me.idPrefix = 'DataFile_';                                 // 2016-08-13
 
    me.utility = null;
