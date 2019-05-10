@@ -739,13 +739,14 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
      $("#" + uploadDataFilenameSelectedId).change(function(e) {
         // Currently only support one file upload
-        var files = this.files;
-        me.fileName = files[0].name;
-        me.readFile(files[0]).done(function(fileData){
-           me.fileData = fileData;
-           //alert(me.fileData.length);
-        });
-        //me.urlSaveDataFileJson
+		var files = this.files;
+         me.fileName = files[0].name;
+         readFile(files[0]).done(function(fileData){
+            me.fileData = fileData;
+            //alert(me.fileData.length);
+            let uploadFormSubmitId = me.idPrefix + "uploadFormSubmit" + me.uniqueId;
+            $("#" + uploadFormSubmitId).prop('disabled', false);
+         });
      });
 
 
