@@ -682,10 +682,58 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             if (jsonObj.code == 0) {         // successfully logged out
                alert("Successfully deleted");
             }
-            else {
-               alert(jsonObj.code + ': ' + jsonObj.message);
+            else{
+              console.error("Server Error");
+              if (typeof failFunc === "function"){
+                failFunc();
+              }
+              else if(typeof me.Error === "function"){
+                me.Error("Server Error");
+              }
+              else {
+                alert("deleteDataFile Error");
+              }
             }
-         }, 'json');
+         }, 'json')
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
+         });
       });
 
       //2019-04-29
@@ -725,7 +773,9 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       $.get(me.urlGetAllCategoryDataFilenamesJson, function(data) {
          var filenameListContainerId = me.idPrefix + "filenameListContainer" + me.uniqueId;
          var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
+
          if (data.code == 0) {          // successfully get db list
+            me.categoryFilenameList = data.message;
             if (me.displayWidget) {
                var jelement = $("#" + filenameListContainerId);
                var w = jelement.width(800);                                // 2018-03-21
@@ -736,7 +786,6 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
                var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
                jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
                jelement.show();
-               me.categoryFilenameList = data.message;
                displayFilenameList();
             }
             if (typeof me.callerCallback === "function") me.callerCallback();

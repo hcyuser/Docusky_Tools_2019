@@ -872,7 +872,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
-      $.ajaxSetup({xhrFields: { withCredentials: true } });
       var url = me.urlGetQueryResultDocumentsJson + "?target=" + target
               + (ownerUsername ? ("&ownerUsername=" + ownerUsername) : "")
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
@@ -1059,8 +1058,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 	   }
 
       // uses jquery ajax for simplicity
-      //$.ajaxSetup({async:false});
-      $.ajaxSetup({xhrFields: { withCredentials: true } });
       var url = me.urlGetQueryPostClassificationJson + "?target=" + target
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
@@ -1206,7 +1203,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
-      $.ajaxSetup({xhrFields: { withCredentials: true } });
       var url = me.urlGetQueryTagAnalysisJson + "?target=" + target
               + "&db=" + db + "&corpus=" + corpus + "&query=" + query
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
