@@ -259,11 +259,46 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       			$("#" + dbCorpusListContainerId).fadeOut();
          }, 'json')
          .fail(function (jqXHR, textStatus, errorThrown){
-            console.error("Connection Error");
-            alert("Connection Error");
-          });
-		   // Clear out obtained document list
-		   me.docList = [];
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
+         });
+		     // Clear out obtained document list
+		     me.docList = [];
       });
 
       $("#" + closeDbCorpusListButtonId).click(function(e) {
@@ -319,11 +354,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                  me.Error("Connection Error");
               }
               else{
-               alert("Connection Error");
-               let retry = function(){
-                 docuskyGetDbCorpusDocumentsSimpleUI = new ClsDocuskyGetDbCorpusDocumentsSimpleUI();
-               }
-               setTimeout(retry,3000);
+                alert("Connection Error");
               }
             })
             .always(function() {

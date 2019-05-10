@@ -483,7 +483,46 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
                $("#" + filenameListContainerId).fadeout();
                alert(jsonObj.code + ': ' + jsonObj.message);
             }
-         }, 'json');
+         }, 'json')
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
+         });
       });
 
       $("#" + closefilenameListId).click(function(e) {
@@ -883,6 +922,7 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
             if (typeof me.callerCallback === "function") me.callerCallback();
          }
          else if (data.code == 101) {             // requires login
+           if(me.displayWidget){
              var jelement = $("#" + loginContainerId);
              var w = jelement.width();
              var h = jelement.height();
@@ -892,6 +932,17 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
              var posTop = Math.min(winHeight - overY - 15, evt.pageY + 15);
              jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
              jelement.show();
+           }else{
+             var jelement = $("#" + loginContainerId);
+             var w = jelement.width();
+             var h = jelement.height();
+             var overX = Math.max(0, w - 40 - winWidth);     // 超過右側邊界多少 pixels
+             var posLeft = Math.max(10, overX - 40);
+             var overY = Math.max(0, h + 15 - winHeight);    // 超過下方邊界多少 pixels
+             var posTop = Math.min(winHeight - overY - 15, 15);
+             jelement.css({ top: posTop + 'px', left: posLeft + 'px' });
+             jelement.show();
+           }
          }
          else {
              console.error("Server Error");

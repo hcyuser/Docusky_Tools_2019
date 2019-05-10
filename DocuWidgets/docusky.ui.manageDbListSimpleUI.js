@@ -212,7 +212,46 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
                $("#" + dbListContainerId).fadeout();
                alert(jsonObj.code + ': ' + jsonObj.message);
             }
-         }, 'json');
+         }, 'json')
+         .fail(function (jqXHR, textStatus, errorThrown){
+           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
+              alert("Server response seems not a valid JSON");
+              return;
+           }
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             console.error("Server Error");
+           }
+           else{
+             console.error("Connection Error");
+           }
+            if (typeof failFunc === "function") {
+               failFunc();
+            }
+            else if(typeof me.Error === "function"){
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                me.Error("Server Error");
+              }
+              else{
+                me.Error("Connection Error");
+              }
+            }
+            else{
+              if(jqXHR.status=="404" || jqXHR.status=="403"){
+                alert("Server Error");
+              }
+              else{
+                if(me.presentRetryCount < me.maxRetryCount){
+                  me.presentRetryCount++;
+                  alert("Connection Error");
+                }
+                else{
+                  alert("Please check your Internet connection and refresh this page.");
+                }
+
+              }
+            }
+
+         });
       });
 
       $("#" + docuskyLinkAnchorId).click(function(e) {
@@ -413,7 +452,7 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          corpusListStr += "</div>";
 
          var t = (me.widgetEvents.dbClick) ? "<span class='dsw-dbClick' x-db='" + db + "'>" + db + "</span>" : db;
-         var deleteMsg = (username == ownerUsername) 
+         var deleteMsg = (username == ownerUsername)
                        ? "<a class='deleteDb' href='" + me.urlDeleteDbJson + "?db=" + db + "'>刪除</a>"
                        : "<span style='background-color:darkred;color:white;'>" + ownerUsername + "</span>";
          s += "<tr class='dsw-tr-dbcorpuslist'>"
