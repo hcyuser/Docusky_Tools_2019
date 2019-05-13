@@ -1,6 +1,7 @@
 /**
  * docusky.ui.manageDataFileListSimpleGISUI.js
  * modified from docusky.ui.manageDataFileListSimpleUI.js
+ * The most differences are var s, var displayFilenameList,  me.manageDataFileList and CSS injection
  * (URL)
  *
  * (Description)
