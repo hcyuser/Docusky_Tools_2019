@@ -177,10 +177,6 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
               alert("Server response seems not a valid JSON");
               return;
            }
-           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
-              alert("Server response seems not a valid JSON");
-              return;
-           }
            if(jqXHR.status=="404" || jqXHR.status=="403"){
              console.error("Server Error");
            }

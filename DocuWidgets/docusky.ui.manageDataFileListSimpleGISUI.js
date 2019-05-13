@@ -1,7 +1,7 @@
 /**
  * docusky.ui.manageDataFileListSimpleGISUI.js
  * modified from docusky.ui.manageDataFileListSimpleUI.js
- * The most differences are var s, var displayFilenameList,  me.manageDataFileList and CSS injection
+ * The most differences are var s, var displayFilenameList,  me.manageDataFileList and CSS injection.
  * (URL)
  *
  * (Description)
@@ -175,10 +175,6 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
          })
          .fail(function (jqXHR, textStatus, errorThrown){
-           if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
-              alert("Server response seems not a valid JSON");
-              return;
-           }
            if (jqXHR.status=="200") {          // 2019-05-07: server return not correct json
               alert("Server response seems not a valid JSON");
               return;
