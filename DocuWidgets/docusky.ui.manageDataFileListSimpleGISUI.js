@@ -1159,113 +1159,27 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
    // 動態載入 utility functions
    me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
-   me.utility = docuskyWidgetUtilityFunctions;
-   if (!me.initialized) init();
 
-};
-
-// ----------------------------------------------------------------------------------
-
-var docuskyWidgetUtilityFunctions = {
-   getUrlParameterVarValue: function(url, varname) {
-      var p = url.indexOf('?');
-      if (p == -1) return '';
-      var urlVars = url.substr(p+1).split('&');
-
-      for (i = 0; i < urlVars.length; i++) {
-         var nameVal = urlVars[i].split('=');
-         if (nameVal[0] === varname) {
-            return nameVal[1] === undefined ? true : nameVal[1];
+   if(typeof docuskyWidgetUtilityFunctions === 'undefined'){
+     var script  = document.createElement('script');
+     script.src  = me.scriptPath + "docusky.ui.utility.js";
+     script.type = 'text/javascript';
+     script.onload = function () {
+         me.utility = docuskyWidgetUtilityFunctions;
+         init();
+         if(document.querySelectorAll('script[src$="docusky.ui.utility.js"]').length > 1){
+           script.remove();
          }
-      }
-      return '';
-   },
-
-   //getScriptPath: function() {
-   //   var ua = window.navigator.userAgent;
-   //   var msie = ua.indexOf("MSIE ");
-   //   if (msie) {
-   //      // use fixed url
-   //      var pathParts = "http://docusky.digital.ntu.edu.tw/docusky/js.ui/docusky.widget.utilityFunctions.js";
-   //   }
-   //   else {
-   //      var errorStack = new Error().stack;
-   //      var pathParts = errorStack.match(/((http[s]?):\/\/([^\/]+)\/((.+)\/)?([^\/]+\.js)):/);
-   //   }
-   //   return {
-   //      fullPath: pathParts[1],
-   //      protocol: pathParts[2],
-   //      host: pathParts[3],
-   //      path: pathParts[5],
-   //      file: pathParts[6]
-   //   };
-   //},
-
-   basename: function(path) {
-      return path.replace(/.*[/]/, "");
-   },
-
-   dirname: function(path) {
-      return path.match(/(.*)[/]/)[1];
-   },
-
-   uniqueId: (function() {
-      var counter = 0;
-      return function() {
-         return "_" + counter++;
-      }
-   })(),
-
-   getDateStr: function(d, separator) {
-      if (typeof separator == "undefined") separator = '';
-      var twoDigitsMonth = ("0" + (d.getMonth()+1)).slice(-2);      // slice(-2) to get last 2 chars
-      var twoDigitsDay = ("0" + d.getDate()).slice(-2);
-      var strDate = d.getFullYear() + separator + twoDigitsMonth + separator + twoDigitsDay;
-      return strDate;
-   },
-
-   //copyArray: function(o) {
-   //   var output, v, key;
-   //   output = Array.isArray(o) ? [] : {};
-   //   for (key in o) {
-   //      v = o[key];
-   //      output[key] = (typeof v === "object") ? this.copyArray(v) : v;
-   //   }
-   //   return output;
-   //},
-
-   displayJson: function(jsonObj) {
-      //var jsonStr = $("pre").text();
-      //var jsonObj = JSON.parse(jsonStr);
-      var jsonPretty = JSON.stringify(jsonObj, null, '\t');
-      alert(jsonPretty);
-   },
-
-   //2019-05-06
-   setStyle: function(param){
-     if (typeof(param) !== 'object') param = {};
-     if('frameBackgroundColor' in param){
-       $("div.dsw-container").css('border', param.frameBackgroundColor+' solid 3px');
-       $("div.dsw-titleBar").css('background-color', param.frameBackgroundColor);
-     }
-     if('frameColor' in param){
-       $("div.dsw-titleBar").css('color', param.frameColor);
-     }
-     if('contentBackgroundColor' in param){
-       $("div.dsw-container").css('background-color', param.contentBackgroundColor);
-     }
-   },
-
-   // 2017-01-01
-   includeJs: function(url) {
-      var script  = document.createElement('script');
-      script.src  = url;
-      script.type = 'text/javascript';
-      script.defer = true;        // script will not run until after the page has loaded
-      document.getElementsByTagName('head').item(0).appendChild(script);
+     };
+     var now = document.querySelector('script[src$="' + me.package + '"]');
+     document.getElementsByTagName('head').item(0).insertBefore(script, now);
+   }else{
+     me.utility = docuskyWidgetUtilityFunctions;
+     if (!me.initialized) init();
    }
 
 };
+
 
 // 20170302, 20180319, 20190509: CSS injection
 $('head').append('<style id="dsw-simplecomboui">'

@@ -1067,8 +1067,24 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
 
    // 動態載入 utility functions
    me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
-   me.utility = docuskyWidgetUtilityFunctions;
-   if (!me.initialized) init();
+
+   if(typeof docuskyWidgetUtilityFunctions === 'undefined'){
+     var script  = document.createElement('script');
+     script.src  = me.scriptPath + "docusky.ui.utility.js";
+     script.type = 'text/javascript';
+     script.onload = function () {
+         me.utility = docuskyWidgetUtilityFunctions;
+         init();
+         if(document.querySelectorAll('script[src$="docusky.ui.utility.js"]').length > 1){
+           script.remove();
+         }
+     };
+     var now = document.querySelector('script[src$="' + me.package + '"]');
+     document.getElementsByTagName('head').item(0).insertBefore(script, now);
+   }else{
+     me.utility = docuskyWidgetUtilityFunctions;
+     if (!me.initialized) init();
+   }
 
 };
 
