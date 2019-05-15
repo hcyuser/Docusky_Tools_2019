@@ -398,11 +398,11 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       if (me.validEvtKeys.indexOf(evtKey) !== false) me.widgetEvents[evtKey] = null;
    }
 
-   // 2019-04-22
+   /* 2019-04-22
    me.setLoadingIcon = function(url){
      let loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
      $("#"+loadingSignId+" img").attr("src", url);
-   }
+   }*/
 
    var displayDbList = function(evt, succFunc) {
 

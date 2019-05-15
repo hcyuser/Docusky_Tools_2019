@@ -7,9 +7,10 @@
    <script src="https://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
    <script src="https://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
    <link href="https://docusky.org.tw/DocuSky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <!--<script src="./docusky.ui.utility.js"></script>-->
    <script src="./docusky.ui.manageDbListSimpleUI.js"></script>
    <script src="./docusky.ui.getDbCorpusDocumentsSimpleUI.js"></script>
-   <!--<script src="./docusky.ui.manageDataFileListSimpleUI.js"></script>-->
+   <script src="./docusky.ui.manageDataFileListSimpleUI.js"></script>
    <style type="text/css">
       span.modifyDocButton { background-color:brown; border:2px brown solid; border-radius:4px; color:white; font-size:smaller; padding:2px; cursor:pointer }
       div.boxContainer { position:absolute; left: 55px; top: 20px; width:800px; height:auto;
@@ -62,7 +63,7 @@ $(window).ready(function() {
    var me = this;
    docuSkyDbObj = docuskyManageDbListSimpleUI;
    docuSkyGetDocsObj = docuskyGetDbCorpusDocumentsSimpleUI;
-   //docuSkyDataFilesObj = docuskyManageDataFileListSimpleUI;
+   docuSkyDataFilesObj = docuskyManageDataFileListSimpleUI;
 
    $("#manageDbList").click(function(e) {
       docuSkyDbObj.manageDbList(e);

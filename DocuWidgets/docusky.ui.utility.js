@@ -49,6 +49,7 @@
     uniqueId: (function() {
        var counter = 0;
        return function() {
+          //console.log(counter);
           return "_" + counter++;
        }
     })(),
@@ -81,6 +82,16 @@
       if('contentBackgroundColor' in param){
         $("div.dsw-container").css('background-color', param.contentBackgroundColor);
       }
+    },
+    //20190515
+    setLoadingIcon: function(url){
+      let loadingSignId = null;
+
+      loadingSignId = docuskyManageDbListSimpleUI.idPrefix + "loadingSign" + docuskyManageDbListSimpleUI.uniqueId;
+      $("#"+loadingSignId+" img").attr("src", url);
+
+      loadingSignId = docuskyGetDbCorpusDocumentsSimpleUI.idPrefix + "loadingSign" + docuskyGetDbCorpusDocumentsSimpleUI.uniqueId;
+      $("#"+loadingSignId+" img").attr("src", url);
     },
 
     // 2017-01-01

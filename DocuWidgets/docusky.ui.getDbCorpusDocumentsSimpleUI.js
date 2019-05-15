@@ -134,7 +134,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       me.uniqueId = me.utility.uniqueId();
       //alert(me.uniqueId);
 
-
       // login container
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       var loginContainerOverlayId = me.idPrefix + "loginContainerOverlay" + me.uniqueId;
@@ -499,11 +498,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       else alert("Argument of addExtraFunctions() must be a function");
    };
 
-   // 2019-04-24
+   /* 2019-04-24
    me.setLoadingIcon = function(url){
      let loadingSignId = me.idPrefix + "loadingSign" + me.uniqueId;
      $("#"+loadingSignId+" img").attr("src", url);
-   };
+   };*/
 
    /*me.setLoginAction = function(loginInvokeFun, loginInvokeFunParameters) {
       me.loginInvokeFun = loginInvokeFun;
