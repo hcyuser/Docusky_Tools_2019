@@ -1161,18 +1161,18 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
    me.scriptPath = new Error().stack.match(/(((?:http[s]?)|(?:file)):\/\/[\/]?([^\/]+)\/((.+)\/)?)([^\/]+\.js):/)[1];
 
    if(typeof docuskyWidgetUtilityFunctions === 'undefined'){
-     var script  = document.createElement('script');
-     script.src  = me.scriptPath + "docusky.ui.utility.js";
-     script.type = 'text/javascript';
-     script.onload = function () {
-         me.utility = docuskyWidgetUtilityFunctions;
-         init();
-         if(document.querySelectorAll('script[src$="docusky.ui.utility.js"]').length > 1){
-           script.remove();
-         }
-     };
-     var now = document.querySelector('script[src$="' + me.package + '"]');
-     document.getElementsByTagName('head').item(0).insertBefore(script, now);
+     var setupUtility = function(){
+       return new Promise((resolve,reject)=>{
+         setTimeout(function(){
+           $.getScript(me.scriptPath+"docusky.ui.utility.js", function(){
+             me.utility = docuskyWidgetUtilityFunctions;
+             init();
+            });
+           resolve()
+         },0)
+       })
+     }
+     setupUtility();
    }else{
      me.utility = docuskyWidgetUtilityFunctions;
      if (!me.initialized) init();
