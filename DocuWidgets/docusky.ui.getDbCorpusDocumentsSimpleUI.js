@@ -28,6 +28,7 @@
  * 0.16 (April 23 2019) add ownerUsername for supporting friend-accessible db
  * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon and modify UI display position
  * 0.18 (May 4 2019) fix retry problem when server improperly return a non-JSON
+ * 0.19 (May 18 2019) add extra DocuSky links to widget display
  *
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
@@ -44,7 +45,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    var me = this;
 
    this.package = 'docusky.ui.getDbCorpusDocumentsSimpleUI.js';    // 主要目的：取得給定 db, corpus 的文件
-   this.version = 0.18;                             // 2019-05-04
+   this.version = 0.19;                             // 2019-05-18
    this.idPrefix = 'CorpusDoc_';                    // 2016-08-13
 
    this.showPublicDbLink = true;                    // 2018-09-30, 2018-10-15
@@ -557,16 +558,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                             + "&ownerUsername=" + ownerUsername
                             + "&db=" + db + "&corpus=" + corpus + "&query=.all&page=" + page + "&pageSize=" + pageSize
                             + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');
-               s += "<tr class='dsw-tr-contentlist'><td class='dsw-td-contentlist dsw-td-contentlist-num'>" + num + ".</td>"
-                  + "<td class='dsw-td-contentlist dsw-td-contentlist-dbname'>" + (username == ownerUsername ? "" : "<span class='dsw-ownerUsername'>" + ownerUsername + "</span> ") + db + "</td>"
-                  + "<td class='dsw-td-contentlist dsw-td-contentlist-corpusname'>" + corpus + "</td><td class='dsw-td-contentlist dsw-td-contentlist-load'>"
-                  + "<nobr><a class='loadDbCorpusDocument' href='dummy?" + urlParam + "'>載入</a></nobr>"       // 2018-09-04: add <nobr>
-                  + "</td></tr>";
+               s += "<tr class='dsw-tr-contentlist'>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-num' width='25'>" + num + ".</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-dbname' align='left' width='32%'>" + (username == ownerUsername ? "" : "<span class='dsw-ownerUsername'>" + ownerUsername + "</span> ") + db + "</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-corpusname' width='50%'>" + corpus + "</td>"
+                  + "<td class='dsw-td-contentlist dsw-td-contentlist-load'><nobr><a class='loadDbCorpusDocument' href='dummy?" + urlParam + "'>載入</a></nobr></td>"       // 2018-09-04: add <nobr>
+                  + "</tr>";
             }
             if (me.showPublicDbLink) {               // 2018-09-30
+               var t = "<td class='dsw-inExtraRow' colspan='2' align='right'>開啟：<span id='openDocuSkyHome' class='dsw-linkOpenWin'>DocuSky 首頁</span> | <span id='openMyDatabases' class='dsw-linkOpenWin'>我的資料庫</span>&#160;&#160;</td>";   // 2019-05-18
                s += (displayTarget == 'OPEN')
-                  ? "<tr><td colspan='3' align='center'><span class='dsw-listPersonalCorpuses'>Show Personal Databases</span></td></tr>"
-                  : "<tr><td colspan='3' align='center'><span class='dsw-listOpenCorpuses'>Show Public Databases</span></td></tr>";
+                  ? "<tr><td class='dsw-inExtraRow' colspan='2' align='left'><span class='dsw-listPersonalCorpuses'>Show Personal Databases</span></td>" + t + "</tr>"
+                  : "<tr><td class='dsw-inExtraRow' colspan='2' align='left'><span class='dsw-listOpenCorpuses'>Show Public Databases</span></td>" + t + "</tr>";
             }
             s += "</table>";
             me.target = displayTarget;               // set target to object scope
@@ -589,6 +592,20 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                var param = { target: 'USER',
                              invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
                displayDbCorpusList(param, evt);
+            });
+            
+            $("#openDocuSkyHome").unbind("click").click(function(e) {     // 2019-05-18
+               var url = (e.altKey) 
+                       ? me.urlScriptPath + "/ds-v1-01.home.html"
+                       : "https://docusky.org.tw";
+               window.open(url, "_blank");
+            });
+
+            $("#openMyDatabases").unbind("click").click(function(e) {     // 2019-05-18
+               var url = (e.altKey) 
+                       ? me.urlScriptPath + "/userMainPage.php"
+                       : "https://docusky.org.tw/docusky/docuTools/UserMain/index.html";
+               window.open(url, "_blank");
             });
 
             $(".loadDbCorpusDocument").click(function(e) {
@@ -1598,7 +1615,9 @@ $('head').append('<style id="dsw-simplecomboui">'
    + '.dsw-logintitle { padding-right: 6px; }'
    + '.dsw-loginsubmit { direction: rtl; }'
    + '.dsw-loginmsg { padding: 0; color: red; font-size: 12px; font-weight: bold; }'
+   + 'td.dsw-inExtraRow { padding-top:0.5em }'              // 2019-05-18
    + 'span.dsw-listOpenCorpuses, span.dsw-listPersonalCorpuses { text-decoration:underline; cursor:pointer; }'         // 2018-09-30
+   + 'span.dsw-linkOpenWin { text-decoration:underline; cursor:pointer; }'                                             // 2019-05-18
    + 'table.dsw-filenameList { width: 100%; margin-right: 16px; border-collapse: collapse; border-spacing: 0; line-height: 1.25; }'
    + '.dsw-filenameList td { padding: 0.25rem; vertical-align: top; white-space: nowrap; }'
    + '.dsw-filenameList-id { text-align: right; }'
