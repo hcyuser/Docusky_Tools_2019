@@ -26,7 +26,7 @@
  * 0.14 (April 23 2019) add with mechanism on maxResponseTimeout, maxRetryCount, uploadProgressFunc, utility.setStyle, setLoadingIcon
  *                      fix the display of uploadprogressbar
  * 0.15 (May 04 2019) fix hideWidget(), add ownerUsername, and fix server improperly return a non-JSON (should not retry in this case)
- *
+ * 0.16 (June 06 2019) remove the dependency of jQuery UI
  *
  *
  * @copyright
@@ -265,7 +265,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
       $("#" + uploadXmlToBuildDbId).click(function(e) {
          e.preventDefault();             // 2016-05-05: 非常重要，否則會出現 out of memory 的 uncaught exception
          //var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
-         $("#" + loadingContainerId).show().position({my: "center", at: "center bottom", of: e});     // jqueryUI
+         $("#" + loadingContainerId).css({top: e.clientY, left: e.clientX});
+         $("#" + loadingContainerId).show();
          var url = me.urlUploadXmlFilesToBuildDbJson;
          var formData = $("#" + uploadFormId).serializeArray();
          var nameVal = $("#" + uploadXmlFileId).attr("name");     // <input type="file" name="...">
@@ -513,7 +514,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
          }
          var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
          var uploadXmlToBuildDbId = me.idPrefix + "uploadXmlToBuildDb" + me.uniqueId;
-         $("#" + loadingContainerId).show().position({ my: "center", at: "center", of: $("#" + dbListContentId), collision: "fit"});     // jqueryUI
+         $("#" + loadingContainerId).css({top: $("#" + dbListContentId).position().top + $("#" + dbListContentId).height()/2, left: $("#" + dbListContentId).position().left + $("#" + dbListContentId).width()/2});
+         $("#" + loadingContainerId).show();
          readFile(files[0]).done(function(fileData){
             me.fileData = fileData;
             $("#" + loadingContainerId).hide();
@@ -546,7 +548,8 @@ var ClsDocuskyManageDbListSimpleUI = function(param) {       // constructor
             }
          }, 'json');*/
       });
-
+      var dbListContainerId = me.idPrefix + "dbListContainer" + me.uniqueId;
+      me.utility.dragElement($("#"+dbListContainerId)[0],$("#"+dbListContainerId+" .dsw-titleBar")[0]);
       // 2016-11-19
       if (me.enableRefresh && refreshDbList) {
          me.timeoutFunId = setTimeout(function() { me.manageDbList(evt, null); }, 15000);      // 15 seconds
@@ -1648,6 +1651,47 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
+
+   dragElement: function(elmnt,handle) {
+     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+     if (handle) {
+        // if present, the header is where you move the DIV from:
+        handle.onmousedown = dragMouseDown;
+      } else {
+        // otherwise, move the DIV from anywhere inside the DIV:
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        // stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    },
 
    //2019-04-17
    setStyle: function(param){

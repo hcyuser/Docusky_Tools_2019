@@ -29,7 +29,7 @@
  * 0.17 (April 24 2019) add utility.setStyle, setLoadingIcon and modify UI display position
  * 0.18 (May 4 2019) fix retry problem when server improperly return a non-JSON
  * 0.19 (May 18 2019) add extra DocuSky links to widget display
- *
+ * 0.20 (June 06 2019) remove the dependency of jQuery UI
  * @copyright
  * Copyright (C) 2016-2019 Hsieh-Chang Tu
  *
@@ -216,10 +216,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          $("#" + providerListContainerId).fadeOut();
       });
 
-      $("#" + providerListContainerId).draggable({
-         containment: 'window',           // 2018-10-13: move within the 'window' box
-         handle: '#' + providerListContainerId + '_TitleBar'
-      });                                 // 2018-12-02: .resizable()
+      me.utility.dragElement($("#" + providerListContainerId)[0],$('#' + providerListContainerId + '_TitleBar')[0]);
 
       // dbCorpusListContainer container
       var dbCorpusListContainerId = me.idPrefix + "dbCorpusListContainer" + me.uniqueId;
@@ -369,7 +366,6 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       me.channelBuffer = {};
       me.initialized = true;
    };
-
    var setUrlApiPath = function(obj, provider) {                // 2018-10-12
       if (provider.urlScheme == 'https') {
          var port = (provider.urlPort != "443") ? (":" + provider.urlPort) : ":443";
@@ -517,7 +513,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       // show loading icon
       var loadingContainerId = me.idPrefix + "loadingContainer" + me.uniqueId;
       var workingProgressId = me.idPrefix + "workingProgressId" + me.uniqueId;
-      $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});
+      $("#" + loadingContainerId).css({top: evt.clientY, left: evt.clientX});
+      $("#" + loadingContainerId).show();
       $("#" + workingProgressId).html("connecting");
 
       var dbCorpusListContentId = me.idPrefix + "dbCorpusListContent" + me.uniqueId;
@@ -593,16 +590,16 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                              invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
                displayDbCorpusList(param, evt);
             });
-            
+
             $("#openDocuSkyHome").unbind("click").click(function(e) {     // 2019-05-18
-               var url = (e.altKey) 
+               var url = (e.altKey)
                        ? me.urlScriptPath + "/ds-v1-01.home.html"
                        : "https://docusky.org.tw";
                window.open(url, "_blank");
             });
 
             $("#openMyDatabases").unbind("click").click(function(e) {     // 2019-05-18
-               var url = (e.altKey) 
+               var url = (e.altKey)
                        ? me.urlScriptPath + "/userMainPage.php"
                        : "https://docusky.org.tw/docusky/docuTools/UserMain/index.html";
                window.open(url, "_blank");
@@ -664,8 +661,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
                let h = $("#" + dbCorpusListContentId).height();    // 2018-10-08
                h = Math.min(360, Math.max(h,50));
                $("#" + dbCorpusListContentId).height(h);
-               $(this).position({my: "left top", at: "center bottom", of: evt, collision: "fit"});    // 20170619: change "none" to "fit"
+               $(this).css({top: evt.clientY, left: evt.clientX});
             });
+
 			   $("#" + dbCorpusListContainerOverlayId).hide();
             //jelement.position({my: "left top", at: "center bottom", of: evt, collision: "fit"});    // 20170619: change "none" to "fit"
 
@@ -778,8 +776,8 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       h = Math.min(300, Math.max(h,50));
       $("#" + providerListContentId).height(h);
       //alert(evt.pageX + ':' + evt.pageY);
-      jelement.position({my:"left+20 top", at:"center bottom", of:evt, collision:"none"});
-      //jelement.css({top: evt.pageX, left: evt.pageY, position:'absolute'});
+      //jelement.position({my:"left+20 top", at:"center bottom", of:evt, collision:"none"});
+      jelement.css({top: evt.pageX, left: evt.pageY, position:'absolute'});
 		$("#" + providerListContainerOverlayId).hide();
    };
 
@@ -902,21 +900,9 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 	   }
 
       // 2018-10-02
-      $("#" + loginContainerId).draggable({
-         containment: 'window',           // 2018-10-06: move within the 'window' box
-         handle: '#' + loginContainerId + '_TitleBar'
-      });
-      $("#" + dbCorpusListContainerId).draggable({
-         containment: 'window',           // 2018-10-06: move within the 'window' box
-         handle: '#' + dbCorpusListContainerId + '_TitleBar'
-      }).resizable({                      // 2018-12-02
-         alsoResize: '#' + dbCorpusListContentId,
-         resize: function(evt, ui) {
-                    me.uiState[dbCorpusListContainerId] = { size: ui.size };     // ui.size: { width:w, height:h}
-                 },
-         minWidth: 480,
-         minHeight: 120
-      });;
+      me.utility.dragElement($("#" + loginContainerId)[0], $("#" + loginContainerId + '_TitleBar')[0]);
+      me.utility.dragElement($("#" + dbCorpusListContainerId)[0], $('#' + dbCorpusListContainerId + '_TitleBar')[0]);
+      me.uiState[dbCorpusListContainerId] = { size: { width: 650, height: 120} };
 
       // uses jquery ajax for simplicity
       //$.ajaxSetup({async:false});
@@ -935,7 +921,13 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
       //$("#" + loadingContainerId).show().css({top:myTop, left:myLeft});
 
       if (me.displayLoadingIcon) {
-         $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
+        if(evt){
+          $("#" + loadingContainerId).css({top: evt.clientY, left: evt.clientX, position:'absolute'});
+        }
+        else{
+          $("#" + loadingContainerId).css({top: 25, left: 25, position:'absolute'});
+        }
+         $("#" + loadingContainerId).show();
          $("#" + workingProgressId).html(message);
       }
       //alert(url);
@@ -986,18 +978,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 
          }
          else if (data.code == 101) {             // requires login
-			   $("#" + dbCorpusListContainerId).fadeOut();
-            var jelement = $("#" + loginContainerId);
-			   jelement.fadeTo(200, 1);
-			   $("#" + loginContainerOverlayId).hide();
-            jelement.position({my: "left top", at: "center bottom", of: evt, collision: "fit"});
+  			   $("#" + dbCorpusListContainerId).fadeOut();
+           var jelement = $("#" + loginContainerId);
+  			   jelement.fadeTo(200, 1);
+  			   $("#" + loginContainerOverlayId).hide();
+           jelement.css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
          }
          else if (data.code == 201) {             // requires db and corpus => display db list for user to specify
             var param = { target: target,
                           invokeFunName: 'getDbCorpusDocumentsGivenPageAndSize'};
             if (fieldsOnly !== undefined) param.fieldsOnly = me.fieldsOnly;
             //console.log(param, me.callerEvent)
-            displayDbCorpusList(param, me.callerEvent);
+            displayDbCorpusList(param, evt);
          }
          else {
            console.error("Server Error");
@@ -1028,16 +1020,17 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
           }
 
          if(evt || me.displayLoadingIcon){
-           if(jqXHR.status=="404" || jqXHR.status=="403"){
-             $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-             $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
-             $("#"+loadingContainerId).show();
-
+           if(evt){
+             $("#" + loadingContainerId).css({top: evt.clientY, left: evt.clientX, position:'absolute'});
            }else{
-             $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
-             $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
-             $("#"+loadingContainerId).show();
+             $("#" + loadingContainerId).css({top: 25, left: 25, position:'absolute'});
            }
+           if(jqXHR.status=="404" || jqXHR.status=="403"){
+             $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
+           }else{
+             $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
+           }
+           $("#"+loadingContainerId).show();
          }
          if (typeof failFunc === "function") {
             failFunc();
@@ -1111,8 +1104,15 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
 
       if (me.displayLoadingIcon) {
-         $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI
-         $("#" + workingProgressId).html(message);
+        if(me.callerEvent){
+          $("#" + loadingContainerId).css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
+        }
+        else{
+          $("#" + loadingContainerId).css({top: 25, left: 25, position:'absolute'});
+        }
+
+       $("#" + loadingContainerId).show();
+       $("#" + workingProgressId).html(message);
       }
 
 	   //alert("=> " + url);
@@ -1128,11 +1128,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             }
          }
          else if (data.code == 101) {             // requires login
-			   $("#" + dbCorpusListContainerId).fadeOut();
+			      $("#" + dbCorpusListContainerId).fadeOut();
             var jelement = $("#" + loginContainerId);
-			   jelement.fadeTo(200, 1);
-			   $("#" + loginContainerOverlayId).hide();
-            jelement.position({my: "left top", at: "center bottom", of: evt, collision: "fit"});
+			      jelement.fadeTo(200, 1);
+			      $("#" + loginContainerOverlayId).hide();
+            jelement.css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
          }
          else if (data.code == 201) {            // requires db and corpus => display db list for user to specify
             var param = { target: target,
@@ -1166,15 +1166,18 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             console.error("Connection Error");
          }
          if(evt || me.displayLoadingIcon){
+             if(evt){
+               $("#" + loadingContainerId).css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
+             }
+             else{
+               $("#" + loadingContainerId).css({top:25, left: 25, position:'absolute'});
+             }
             if(jqXHR.status=="404" || jqXHR.status=="403"){
-               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
                $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
-               $("#"+loadingContainerId).show();
             }else{
-               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
                $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
-               $("#"+loadingContainerId).show();
             }
+            $("#"+loadingContainerId).show();
          }
          if (typeof failFunc === "function") {
             failFunc();
@@ -1256,8 +1259,14 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
               + (fieldsOnly ? "&fieldsOnly=" + fieldsOnly : '');     // 2018-09-15
 
       if (me.displayLoadingIcon) {
-         $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI
-         $("#" + workingProgressId).html(message);
+          if(evt){
+            $("#" + loadingContainerId).css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
+          }
+          else{
+            $("#" + loadingContainerId).css({top: 25, left: 25, position:'absolute'});
+          }
+          $("#" + loadingContainerId).show();
+          $("#" + workingProgressId).html(message);
       }
 
 	   //alert(url);
@@ -1272,11 +1281,11 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
             }
          }
          else if (data.code == 101) {             // requires login
-			   $("#" + dbCorpusListContainerId).fadeOut();
-            var jelement = $("#" + loginContainerId);
-			   jelement.fadeTo(200, 1);
-			   $("#" + loginContainerOverlayId).hide();
-            jelement.position({my: "left top", at: "center bottom", of: evt, collision: "fit"});
+  			   $("#" + dbCorpusListContainerId).fadeOut();
+           var jelement = $("#" + loginContainerId);
+  			   jelement.fadeTo(200, 1);
+  			   $("#" + loginContainerOverlayId).hide();
+           jelement.css({top: me.callerEvent.clientY, left: me.callerEvent.clientX, position:'absolute'});
          }
          else if (data.code == 201) {            // requires db and corpus => display db list for user to specify
             var param = { target: target,
@@ -1311,12 +1320,15 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
          }
 
          if(evt || me.displayLoadingIcon){
+            if(evt){
+              $("#" + loadingContainerId).css({top: me.callerEvent.clientY, left: me.callerEvent.clientX});
+            }else{
+              $("#" + loadingContainerId).css({top: 25, left: 25});
+            }
             if(jqXHR.status=="404" || jqXHR.status=="403"){
-               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
                $("#" + workingProgressId).html("<font size='3.5'>Server <br> Error</font>");
                $("#"+loadingContainerId).show();
             }else{
-               $("#" + loadingContainerId).show().position({my: "left+25 top+25", at: "center bottom", of: evt, collision: "fit"});     // jqueryUI, 20170619: change "none" to "fit"
                $("#" + workingProgressId).html("<font size='3.5'>Unstable <br> network</font>");
                $("#"+loadingContainerId).show();
             }
@@ -1557,6 +1569,46 @@ var docuskyWidgetUtilityFunctions = {
       var jsonPretty = JSON.stringify(jsonObj, null, '\t');
       alert(jsonPretty);
    },
+   dragElement: function(elmnt,handle) {
+     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+     if (handle) {
+        // if present, the header is where you move the DIV from:
+        handle.onmousedown = dragMouseDown;
+      } else {
+        // otherwise, move the DIV from anywhere inside the DIV:
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        // stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    },
 
    //2019-04-24
    setStyle: function(param){
@@ -1588,7 +1640,7 @@ var docuskyWidgetUtilityFunctions = {
 $('head').append('<style id="dsw-simplecomboui">'
 	+ 'div.dsw-container { position:absolute; border:#4F4F4F solid 3px; background-color:#EFEFEF; border-radius:4px; display:inline-block; font-family: "Arial","MingLiU"; font-size: 16px; z-index:1001 }'
 	+ 'div.dsw-titleBar { background-color:#4F4F4F; color:white; z-index:1001; padding: 6px; line-height: 16px; }'
-	+ 'div.dsw-containerContent { padding: 6px; overflow-x:hidden; overflow-y:auto; font-size:medium; z-index:1001 }'
+	+ 'div.dsw-containerContent { padding: 6px; resize: both; overflow-x:hidden; overflow-y:auto; font-size:medium; z-index:1001 }'
 	+ '.dsw-titleBar table,.dsw-containerContent table { width: 100%; line-height:1.3em; border-collapse: collapse; border-spacing:0; }'
 	+ 'table.dsw-tableContentList { width:100%; margin-right: 16px; border-collapse: collapse; border-spacing: 0; font-size:medium; line-height:1.3em; color:#2F2F3F; }'
 	+ 'tr.dsw-tr-contentlist:nth-child(even) { background: #DFDFDF; line-height:1.3em; }'
