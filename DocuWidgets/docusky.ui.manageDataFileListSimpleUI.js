@@ -791,11 +791,15 @@ var ClsDocuskyManageDataFileListSimpleUI = function(param) {    // constructor
       me.callerEvent = evt;
       me.callerCallback = succFunc;
 
-      // 決定顯示的位置
-      var winWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-      // winWidth = $('body').innerWidth();
-      // var scrollbarWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - Local.winWidth;
-      var winHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      if(evt){
+        // 決定顯示的位置
+        var winWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        // winWidth = $('body').innerWidth();
+        // var scrollbarWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) - Local.winWidth;
+        var winHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      }
+
+
 
       //$.ajaxSetup({async:false});
       $.ajaxSetup({xhrFields: {withCredentials: true}});
