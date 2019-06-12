@@ -508,6 +508,10 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
    }*/
 
    var displayDbCorpusList = function(param, evt) {          // list all db/corpus pairs (not the corpuses under a given db)
+      // add the mechanism of inadvertent error prevention on UI display
+      if(!evt && me.displayWidget){
+        var evt = {clientX:40, clientY:40};
+      }
       var loginContainerId = me.idPrefix + "loginContainer" + me.uniqueId;
       $("#" + loginContainerId).hide();
       // show loading icon
@@ -899,7 +903,7 @@ var ClsDocuskyGetDbCorpusDocumentsSimpleUI = function(param) {     // class (con
 		   $("#" + loginContainerId).fadeTo(200, 0.5);
 	   }
 
-      // 2018-10-02
+      // 2019-06-12
       me.utility.dragElement($("#" + loginContainerId)[0], $("#" + loginContainerId + '_TitleBar')[0]);
       me.utility.dragElement($("#" + dbCorpusListContainerId)[0], $('#' + dbCorpusListContainerId + '_TitleBar')[0]);
       me.uiState[dbCorpusListContainerId] = { size: { width: 650, height: 120} };
