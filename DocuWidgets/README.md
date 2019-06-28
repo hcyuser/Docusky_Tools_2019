@@ -79,7 +79,7 @@ If you want to use *docusky.ui.manageDataFileListSimpleUI.js*, include
 after jQuery library.
 
 ## Quick Start
-You could activate the widgets UI by the following example.
+You could activate the widgets' UI by the following example.
 ```gherkin=
 <!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
 <html>
