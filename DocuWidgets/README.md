@@ -143,7 +143,7 @@ To get user information, user friendship, or to upload DocuXML to a database as 
 ### `docuskyManageDbListSimpleUI.loginSuccFunc`
 
 #### Description:
-If the user didn't login, the widget will force the user to login. After logging in, it will execute `docuskyManageDbListSimpleUI.loginSuccFunc`. For example, it could be used as following:
+If the user didn't login, the widget will force the user to login. After logging in, it will execute `docuskyManageDbListSimpleUI.loginSuccFunc`. For example, it could be as following:
 ```gherkin=
 <script>
 docuskyManageDbListSimpleUI.loginSuccFunc = function(){
@@ -221,7 +221,7 @@ docuskyManageDbListSimpleUI.maxRetryCount = 20;
 ### `docuskyManageDbListSimpleUI.login(username, password, succFunc, failFunc)`
 
 #### Description:
-It is used for user login.
+For user login.
 
 ##### `username`
 Type: String
@@ -249,7 +249,7 @@ function(){console.log("No");});
 ### `docuskyManageDbListSimpleUI.hideWidget(is_hidden)`
 
 #### Description:
-It is used for hidding this widget display on the web. The widget is displayed on the web as default.
+Hide this widget display on the web. The widget is displayed on the web as default.
 
 ##### `is_hidden`
 Type: Boolean
@@ -269,7 +269,7 @@ docuskyManageDbListSimpleUI.hideWidget(false);
 ### `docuskyManageDbListSimpleUI.hideLoadingIcon(is_hidden)`
 
 #### Description:
-It is used for hidding loading icon display on the web. The loading icon is displayed on the web as default.
+Hide loading icon display on the web. The loading icon is displayed on the web as default.
 
 ##### `is_hidden`
 Type: Boolean
@@ -289,7 +289,7 @@ docuskyManageDbListSimpleUI.hideLoadingIcon(false);
 ### `docuskyManageDbListSimpleUI.includeFriendDb(is_inclusive)`
 
 #### Description:
-It is used for showing friend's corpus. The default value is `false`.
+Show friend's corpus. The default value is `false`.
 
 ##### `is_inclusive`
 Type: Boolean
@@ -309,7 +309,7 @@ docuskyManageDbListSimpleUI.includeFriendDb(false);
 ### `docuskyManageDbListSimpleUI.enableWidgetEvent(evtKey, callback)`
 
 #### Description:
-It is used to set some event callback functions on the widget UI.
+Set some event callback functions on the widget UI.
 
 ##### `evtKey`
 Type: String
@@ -332,7 +332,7 @@ function(){
 ### `docuskyManageDbListSimpleUI.disableWidgetEvent(evtKey)`
 
 #### Description:
-It is used to disable some event callback functions on the widget UI.
+Disable some event callback functions on the widget UI.
 
 ##### evtKey
 Type: String
@@ -348,7 +348,7 @@ docuskyManageDbListSimpleUI.disableWidgetEvent("dbClick");
 ### `docuskyManageDbListSimpleUI.setLoadingIcon(url)`
 
 #### Description:
-It is used to set a loading icon by URL.
+Set a loading icon by URL.
 
 ##### `url`
 Type: String
@@ -449,7 +449,7 @@ function myFunc() {
 ### `docuskyManageDbListSimpleUI.manageDbList(evt, succFunc, failFunc)`
 
 #### Description:
-It is used to open the widget UI and get the list of databases. The list of databases will be in `docuskyManageDbListSimpleUI.dbList`.
+Open the widget UI and get the list of databases. The list of databases will be in `docuskyManageDbListSimpleUI.dbList`.
 
 ##### `evt`
 Type: Event
@@ -610,7 +610,7 @@ function displayResponseJson(message) {
 ### `docuskyManageDbListSimpleUI.deleteUserFriendship(param, succFunc, failFunc)`
 
 #### Description:
-It is used to delete friendship between the current user and the assigned user.
+Delete friendship between the current user and the assigned user.
 
 ##### `param`
 Type: Object
@@ -696,7 +696,7 @@ The callback function to execute when it is failed.
 ### `docuskyManageDbListSimpleUI.utility.setStyle(param)`
 
 #### Description:
-It is used to set the style of the widget UI.
+Set the style of the widget UI.
 
 ##### `param`
 Type: Object
@@ -779,7 +779,7 @@ docuskyGetDbCorpusDocumentsSimpleUI.maxRetryCount = 20;
 ### `docuskyGetDbCorpusDocumentsSimpleUI.setLoadingIcon(url)`
 
 #### Description:
-It is used to set a loading icon by URL.
+Set a loading icon by URL.
 
 ##### `url`
 Type: String
@@ -794,7 +794,7 @@ docuskyGetDbCorpusDocumentsSimpleUI.setLoadingIcon("http://www.loadinfo.net/imag
 ### `docuskyGetDbCorpusDocumentsSimpleUI.hideLoadingIcon(is_hidden)`
 
 #### Description:
-It is used for hidding loading icon display on the web. The loading icon is displayed on the web as default.
+Hide loading icon display on the web. The loading icon is displayed on the web as default.
 
 ##### `is_hidden`
 Type: Boolean
@@ -814,7 +814,7 @@ docuskyGetDbCorpusDocumentsSimpleUI.hideLoadingIcon(false);
 ### `docuskyGetDbCorpusDocumentsSimpleUI.includeFriendDb(is_inclusive)`
 
 #### Description:
-It is used for showing friend's corpus. The default value is `false`.
+Show friend's corpus. The default value is `false`.
 
 ##### `is_inclusive`
 Type: Boolean
@@ -957,7 +957,7 @@ The documents are paginated when fetched as lists. It is used to get the specifi
 
 ##### `pageSize`
 Type: String
-It is used to define the number of documents in a page. The default value is 200.
+Define the number of documents in a page. The default value is 200.
 
 ##### `evt`
 Type: Event
@@ -1223,7 +1223,7 @@ docuskyGetDbCorpusDocumentsSimpleUI.setDbListOption(param);
 ### `docuskyGetDbCorpusDocumentsSimpleUI.utility.setStyle(param)`
 
 #### Description:
-It is used to set the style of the widget UI.
+Set the style of the widget UI.
 
 ##### `param`
 Type: Object
@@ -1469,7 +1469,7 @@ docuskyManageDataFileListSimpleUI.jsonTransporter.renameDataFile("gis", "web","1
 ### `docuskyManageDataFileListSimpleUI.login(username, password, succFunc, failFunc)`
 
 #### Description:
-It is used for user login.
+For user login.
 
 ##### `username`
 Type: String
@@ -1497,7 +1497,7 @@ function(){console.log("No");});
 ### `docuskyManageDataFileListSimpleUI.hideWidget(is_hidden)`
 
 #### Description:
-It is used for hidding this widget display on the web. The widget is displayed on the web as default.
+Hide this widget display on the web. The widget is displayed on the web as default.
 
 ##### `is_hidden`
 Type: Boolean
@@ -1534,7 +1534,7 @@ The callback function to execute when it is failed.
 ### `docuskyManageDataFileListSimpleUI.utility.setStyle(param)`
 
 #### Description:
-It is used to set the style of the widget UI.
+Set the style of the widget UI.
 
 ##### `param`
 Type: Object
